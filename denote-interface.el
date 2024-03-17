@@ -557,6 +557,12 @@ variable `denote-directory' if called interactively."
 (define-derived-mode denote-interface-mode tabulated-list-mode "Denote Interface"
   "Major mode for interfacing with Denote files."
   :interactive nil
+  :group 'denote-interface
+  :after-hook (set (make-local-variable 'mode-line-misc-info)
+                   (append
+                    (list
+                     (list 'denote-interface-filter
+                           '(:eval (format " [%s]" denote-interface-filter))))))
   (unless (and denote-interface--signature-sort-cache denote-interface--signature-propertize-cache)
     (denote-interface--generate-caches))
   (setq tabulated-list-format
@@ -565,7 +571,7 @@ variable `denote-directory' if called interactively."
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-filter)))
+                      (denote-directory-files denote-interface-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
