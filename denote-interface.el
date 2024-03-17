@@ -427,8 +427,16 @@ Note that this function needs to be performant, otherwise
 
 (defun denote-interface-set-signature (path new-sig)
   "Set the note at point's (in `denote-interface' buffer) signature.
-If called non-interactively, set the signature of PATH to NEW-SIG."
-  (interactive (list (denote-interface--get-entry-path) nil))
+Can be called interactively from a denote note or a `denote-interface'
+entry. If called non-interactively, set the signature of PATH to
+NEW-SIG."
+  (interactive (list (cond ((derived-mode-p 'denote-interface-mode)
+                            (denote-interface--get-entry-path))
+                           ((denote-file-is-note-p (buffer-file-name))
+                            (buffer-file-name))
+                           (t
+                            (user-error "Must use in `denote-interface' or a Denote note!")))
+                     nil))
   (let* ((path (or path (denote-interface--get-entry-path)))
          (file-type (denote-filetype-heuristics path))
          (title (denote-retrieve-title-value path file-type))
@@ -588,7 +596,6 @@ be modified will be set relative to that note. See
       (use-local-map keymap))))
 
 ;;;; Major-modes and keymaps
-;;;;; Denote-interface
 (defvar denote-interface-mode-map
   (let ((km (make-sparse-keymap)))
     (define-key km (kbd "//") #'denote-interface-edit-filter)
