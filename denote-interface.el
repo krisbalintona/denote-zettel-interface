@@ -395,6 +395,7 @@ Note that this function needs to be performant, otherwise
     (denote-interface--signature-lessp sig1 sig2)))
 
 ;;;; Commands
+;;;;; Filtering
 (defun denote-interface-edit-filter ()
   "Edit the currently existing filter."
   (interactive)
@@ -410,6 +411,7 @@ Note that this function needs to be performant, otherwise
                          (remove denote-interface-starting-filter denote-interface-starting-filter-presets)))
   (revert-buffer))
 
+;;;;; Viewing
 (defun denote-interface-goto-note ()
   "Jump to the note corresponding to the entry at point."
   (interactive)
@@ -425,6 +427,7 @@ Note that this function needs to be performant, otherwise
   (interactive)
   (display-buffer (find-file-noselect (denote-interface--get-entry-path)) t))
 
+;;;;; Signatures
 (defun denote-interface-set-signature (path new-sig)
   "Set the note at point's (in `denote-interface' buffer) signature.
 Can be called interactively from a denote note or a `denote-interface'
