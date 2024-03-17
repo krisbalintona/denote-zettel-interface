@@ -260,15 +260,17 @@ Call this function for its side effects."
           denote-interface--top-level-minimum
           (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
                    minimize (string-to-number
-                             (car
-                              (denote-interface--signature-decompose-into-groups
-                               (denote-retrieve-filename-signature f)))))
+                             (or (car
+                                  (denote-interface--signature-decompose-into-groups
+                                   (denote-retrieve-filename-signature f)))
+                                 "")))
           denote-interface--top-level-maximum
           (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
                    maximize (string-to-number
-                             (car
-                              (denote-interface--signature-decompose-into-groups
-                               (denote-retrieve-filename-signature f)))))))
+                             (or (car
+                                  (denote-interface--signature-decompose-into-groups
+                                   (denote-retrieve-filename-signature f)))
+                                 "")))))
   t)
 
 ;;;;; Titles
