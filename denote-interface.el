@@ -60,6 +60,11 @@
   :type 'natnum
   :group 'denote-interface)
 
+(defcustom denote-interface-unsorted-signature "000"
+  "Special signature denoting \"unsorted\" note."
+  :type 'string
+  :group 'denote-interface)
+
 ;;;;; Internal
 (defvar denote-interface--signature-propertize-cache nil
   "Signature cache for `denote-interface--signature-propertize'.")
@@ -185,7 +190,7 @@ used as the directory."
                                             maximize (string-to-number
                                                       (car (denote-interface--signature-decompose-into-groups
                                                             (or (denote-retrieve-filename-signature f)
-                                                                "000")))))))
+                                                                denote-interface-unsorted-signature)))))))
                               "=1")))))
     (while (member next-sig
                    (cl-loop for f in (denote-directory-files dir)
@@ -204,7 +209,7 @@ used as the directory."
                (cl-loop for group in groups
                         collect (denote-interface--signature-decompose-elements-from-group group))))
              (level (1- (length decomposed)))
-             (face (if (string= sig "000") 'shadow ; 000 is my "unsorted" signature
+             (face (if (string= sig denote-interface-unsorted-signature) 'shadow
                      (intern (format "outline-%s" (+ 1 (% (1- level) 8))))))
              (propertized-sig
               (replace-regexp-in-string "=" (propertize "." 'face 'shadow)
@@ -432,11 +437,12 @@ If called non-interactively, set the signature of PATH to NEW-SIG."
          (initial-sig (denote-retrieve-filename-signature path))
          (new-sig (or new-sig
                       (denote-signature-prompt
-                       (unless (string= initial-sig "000") initial-sig) ; 000 is the "unsorted" signature for me
+                       (unless (string= initial-sig denote-interface-unsorted-signature)
+                         initial-sig)
                        "Choose new signature")))
          (keywords
           (denote-retrieve-front-matter-keywords-value path file-type))
-         (denote-rename-no-confirm t)) ; Want it automatic
+         (denote-rename-no-confirm t))  ; Want it automatic
     (denote-rename-file path title keywords new-sig)))
 
 (defun denote-interface-set-signature-interactively (files)
