@@ -171,7 +171,7 @@ The following signature for \"a\" is \"b\", for \"9\" is \"10\", for
                      ((= 90 char) "aa"))) ; Is "Z"
     (concat (string-remove-suffix tail sig) next)))
 
-(defun denote-interface--determine-new-signature (sig &optional relation dir)
+(defun denote-interface--determine-new-signature (sig relation dir)
   "Return the next available signature relative to SIG.
 The new signature depends on RELATION, a string in
 `denote-interface--signature-relations'. If RELATION is \"child\", then
