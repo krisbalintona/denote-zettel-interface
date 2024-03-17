@@ -193,13 +193,11 @@ used as the directory."
                      ("sibling"
                       (denote-interface--next-signature sig))
                      ("top-level"
-                      (concat (number-to-string
-                               (1+ (cl-loop for f in (denote-directory-files dir)
-                                            maximize (string-to-number
-                                                      (car (denote-interface--signature-decompose-into-groups
-                                                            (or (denote-retrieve-filename-signature f)
-                                                                denote-interface-unsorted-signature)))))))
-                              "=1")))))
+                      (let ((top-level-index 1))
+                        (while (denote-directory-files
+                                (rx "==" (literal (number-to-string top-level-index)) "=1"))
+                          (setq top-level-index (1+ top-level-index)))
+                        (concat (number-to-string top-level-index) "=1"))))))
     (while (member next-sig
                    (cl-loop for f in (denote-directory-files dir)
                             collect (denote-retrieve-filename-signature f)))
