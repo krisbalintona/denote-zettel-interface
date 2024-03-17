@@ -426,7 +426,7 @@ Note that this function needs to be performant, otherwise
   (display-buffer (find-file-noselect (denote-interface--get-entry-path)) t))
 
 (defun denote-interface-set-signature (path new-sig)
-  "Set the note at point's signature.
+  "Set the note at point's (in `denote-interface' buffer) signature.
 If called non-interactively, set the signature of PATH to NEW-SIG."
   (interactive (list (denote-interface--get-entry-path) nil))
   (let* ((path (or path (denote-interface--get-entry-path)))
@@ -443,7 +443,7 @@ If called non-interactively, set the signature of PATH to NEW-SIG."
          (denote-rename-no-confirm t))  ; Want it automatic
     (denote-rename-file path title keywords new-sig)))
 
-(defun denote-interface-set-signature-interactively (files)
+(defun denote-interface-set-signature-minibuffer (files)
   "Set the note at point's signature by selecting another note.
 Select another note and choose whether to be its the sibling or child.
 
@@ -524,22 +524,71 @@ the :omit-current non-nil. Otherwise,when called interactively in
          (denote-rename-no-confirm t))
     (denote-interface-set-signature file-at-point new-sig)))
 
-(defun denote-interface-list (dir)
-  "Display list of Denote files in variable `denote-directory'.
-DIR is the directory whose notes are listed. DIR is the value of the
-variable `denote-directory' if called interactively."
-  (interactive (list (buffer-local-value 'denote-directory (current-buffer))))
-  (let ((buf-name (format "*Denote notes in %s*" (abbreviate-file-name dir))))
-    (unless (get-buffer buf-name)
-      (with-current-buffer (get-buffer-create buf-name)
-        (setq buffer-file-coding-system 'utf-8)
-        (denote-interface-mode)))
-    (display-buffer buf-name)))
+(defun denote-interface-set-signature-list (files)
+  "Set the note at point's signature by selecting another note.
+Like `denote-interface-set-signature-minibuffer' but uses
+`denote-interface-selection-mode' instead of minibuffer.
 
-(defalias 'list-denote-interface 'denote-interface-list
-  "Alias of `denote-interface-list' command.")
+FILES are the list of files shown, defaulting to all denote files. When
+\"RET\" or \"q\" is called on a note, the new signature of the file to
+be modified will be set relative to that note. See
+`denote-interface--determine-new-signature' for more details."
+  (interactive (list (if (eq major-mode 'denote-interface-mode)
+                         (denote-interface--entries-to-paths)
+                       (denote-directory-files
+                        (rx (literal (car (last (butlast (file-name-split (buffer-file-name)) 1))))
+                            "/" (* alnum) "==")
+                        :omit-current))))
+  (let* ((file-at-point (cond ((derived-mode-p 'denote-interface-mode)
+                               (denote-interface--get-entry-path))
+                              ((denote-file-is-note-p (buffer-file-name))
+                               (buffer-file-name))
+                              (t
+                               (user-error "Must use in `denote-interface' or a Denote note!"))))
+         (files (remove file-at-point
+                        (or files (denote-directory-files
+                                   (rx (literal (car (last (butlast (file-name-split (buffer-file-name)) 1))))
+                                       "/" (* alnum) "==")
+                                   :omit-current))))
+         (file-type (denote-filetype-heuristics file-at-point))
+         (buf-name (format "*Modify the signature of %s %s*"
+                           (denote-retrieve-filename-signature file-at-point)
+                           (denote-retrieve-front-matter-title-value file-at-point file-type)))
+         (select-func
+          `(lambda ()
+             "Change desired note's signature relate to the chosen note."
+             (interactive)
+             (let* ((selection (denote-interface--get-entry-path))
+                    (note-relation
+                     (downcase (completing-read "Choose relation: "
+                                                denote-interface--signature-relations)))
+                    (new-sig (denote-interface--determine-new-signature
+                              (denote-retrieve-filename-signature selection)
+                              note-relation
+                              selection))
+                    (denote-rename-no-confirm t)) ; Want it without confirmation
+               (denote-interface-set-signature ,file-at-point new-sig)
+               (kill-buffer ,buf-name))))
+         (confirm-quit-func
+          `(lambda ()
+             "Kill buffer with confirmation"
+             (interactive)
+             (when (y-or-n-p (format "Leave before modify signature of %s?"
+                                     ,(denote-retrieve-front-matter-title-value file-at-point file-type)))
+               (kill-buffer ,buf-name))))
+         (keymap (make-sparse-keymap)))
+    (denote-interface-list buf-name)
+    (with-current-buffer buf-name
+      (setq tabulated-list-entries
+            (lambda () (mapcar #'denote-interface--path-to-entry files)))
+      (revert-buffer)
+      (define-key keymap (kbd "RET") select-func)
+      (define-key keymap (kbd "q") confirm-quit-func)
+      (set-keymap-parent keymap denote-interface-mode-map)
+      (use-local-map keymap))))
 
-;;;; Major-mode and map
+;;;; Major-modes and keymaps
+;;;;; Denote-interface
 (defvar denote-interface-mode-map
   (let ((km (make-sparse-keymap)))
     (define-key km (kbd "//") #'denote-interface-edit-filter)
@@ -549,8 +598,8 @@ variable `denote-directory' if called interactively."
     (define-key km (kbd "RET") #'denote-interface-goto-note)
     (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
     (define-key km (kbd "C-o") #'denote-interface-display-note)
-    (define-key km (kbd "r") #'denote-interface-set-signature-interactively)
-    (define-key km (kbd "R") #'denote-interface-set-signature)
+    (define-key km (kbd "r") #'denote-interface-set-signature-list)
+    (define-key km (kbd "R") #'denote-interface-set-signature-minibuffer)
     km)
   "Mode map for `denote-interface-mode'.")
 
@@ -576,6 +625,22 @@ variable `denote-directory' if called interactively."
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
   (tabulated-list-print))
+
+(defun denote-interface-list (name)
+  "Display list of Denote files in variable `denote-directory'.
+If NAME is supplied, that will be the name of the buffer."
+  (interactive (list nil))
+  (let ((buf-name (or name
+                      (format "*Denote notes in %s*"
+                              (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer)))))))
+    (unless (get-buffer buf-name)
+      (with-current-buffer (get-buffer-create buf-name)
+        (setq buffer-file-coding-system 'utf-8)
+        (denote-interface-mode)))
+    (display-buffer buf-name)))
+
+(defalias 'list-denote-interface 'denote-interface-list
+  "Alias of `denote-interface-list' command.")
 
 ;;; [End]
 (provide 'denote-interface)
