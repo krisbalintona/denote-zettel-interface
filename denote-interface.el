@@ -24,7 +24,7 @@
 ;; in a similar manner as an analog Zettelkasten.
 
 ;;; Code:
-(require 'tabulated-list)
+(require 'tablist)
 (require 'denote)
 (require 's)
 (require 'subr-x)
@@ -610,7 +610,7 @@ be modified will be set relative to that note. See
     km)
   "Mode map for `denote-interface-mode'.")
 
-(define-derived-mode denote-interface-mode tabulated-list-mode "Denote Interface"
+(define-derived-mode denote-interface-mode tablist-mode "Denote Interface"
   "Major mode for interfacing with Denote files."
   :interactive nil
   :group 'denote-interface
@@ -629,6 +629,7 @@ be modified will be set relative to that note. See
         (lambda () (mapcar #'denote-interface--path-to-entry
                       (denote-directory-files denote-interface-filter)))
         tabulated-list-sort-key '("Signature" . nil))
+  (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
   (tabulated-list-print))
