@@ -315,7 +315,6 @@ following rule derived from the file naming scheme:
   "Return list of file paths present in the `denote-interface' buffer."
   (mapcar #'car (funcall tabulated-list-entries)))
 
-;;;;; Creating entries
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
   `(,path
@@ -624,9 +623,9 @@ be modified will be set relative to that note. See
       (setq tabulated-list-entries
             (lambda () (mapcar #'denote-interface--path-to-entry files)))
       (revert-buffer)
+      (set-keymap-parent keymap denote-interface-mode-map)
       (define-key keymap (kbd "RET") select-func)
       (define-key keymap (kbd "q") confirm-quit-func)
-      (set-keymap-parent keymap denote-interface-mode-map)
       (use-local-map keymap))))
 
 ;;;;; Navigation
@@ -684,6 +683,7 @@ Uses `tablist' filters."
     (define-key km (kbd "M-n") #'denote-interface-filter-top-level-next)
     km)
   "Mode map for `denote-interface-mode'.")
+(set-keymap-parent denote-interface-mode-map tablist-mode-map)
 
 (define-derived-mode denote-interface-mode tablist-mode "Denote Interface"
   "Major mode for interfacing with Denote files."
@@ -707,7 +707,6 @@ Uses `tablist' filters."
         (lambda () (mapcar #'denote-interface--path-to-entry
                       (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
-  (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
   (tabulated-list-print))
