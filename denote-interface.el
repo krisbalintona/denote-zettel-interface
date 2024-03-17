@@ -72,6 +72,14 @@
 (defvar denote-interface--signature-sort-cache nil
   "Signature cache for sorting via `denote-interface--signature-lessp'.")
 
+(defvar denote-interface--top-level-minimum nil
+  "Minimum top-level index for current buffer.")
+(make-variable-buffer-local 'denote-interface--top-level-minimum)
+
+(defvar denote-interface--top-level-maximum nil
+  "Maximum top-level index for current buffer.")
+(make-variable-buffer-local 'denote-interface--top-level-maximum)
+
 (defvar denote-interface--signature-relations
   '("Sibling" "Child" "Top-level")
   "List of possible note relations based on signatures.
@@ -230,6 +238,9 @@ Speeds up `denote-interface' expensive operations. Populates
 `denote-interface--signature-sort-cache' (using
 `denote-interface--signature-lessp').
 
+Also sets `denote-interface--top-level-minimum' and
+`denote-interface--top-level-maximum' buffer locally.
+
 Call this function for its side effects."
   (let ((sigs (cl-remove-duplicates
                (mapcar (lambda (f) (denote-retrieve-filename-signature f))
@@ -239,7 +250,19 @@ Call this function for its side effects."
           (sort sigs #'denote-interface--signature-lessp)
           denote-interface--signature-propertize-cache
           (cl-loop for sig in sigs
-                   collect (cons sig (denote-interface--signature-propertize sig)))))
+                   collect (cons sig (denote-interface--signature-propertize sig)))
+          denote-interface--top-level-minimum
+          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                   minimize (string-to-number
+                             (car
+                              (denote-interface--signature-decompose-into-groups
+                               (denote-retrieve-filename-signature f)))))
+          denote-interface--top-level-maximum
+          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                   maximize (string-to-number
+                             (car
+                              (denote-interface--signature-decompose-into-groups
+                               (denote-retrieve-filename-signature f)))))))
   t)
 
 ;;;;; Titles
@@ -382,7 +405,7 @@ leverages `denote-interface--signature-sort-cache' as a cache."
         (denote-interface--signature-group-lessp (pop groups1) (pop groups2)))))))
 
 (defun denote-interface--signature-sorter (a b)
-  "Tabulated-list sorter for signatures A and B.
+  "Tabulated-list sorter for entries A and B.
 Note that this function needs to be performant, otherwise
 `denote-interface' loading time suffers greatly."
   (let* ((sig1 (aref (cadr a) 0))
@@ -547,8 +570,9 @@ be modified will be set relative to that note. See
   (interactive (list (if (eq major-mode 'denote-interface-mode)
                          (denote-interface--entries-to-paths)
                        (denote-directory-files
-                        (rx (literal (car (last (butlast (file-name-split (buffer-file-name)) 1))))
-                            "/" (* alnum) "==")
+                        (rx (literal (concat (car (last (butlast (file-name-split (buffer-file-name)) 1)))
+                                             "/"))
+                            (* alnum) "==")
                         :omit-current))))
   (let* ((file-at-point (cond ((derived-mode-p 'denote-interface-mode)
                                (denote-interface--get-entry-path))
@@ -598,18 +622,59 @@ be modified will be set relative to that note. See
       (set-keymap-parent keymap denote-interface-mode-map)
       (use-local-map keymap))))
 
+;;;;; Navigation
+(defun denote-interface-filter-top-level-previous ()
+  "Filter the buffer to the next index top-level notes.
+Uses `tablist' filters."
+  (interactive)
+  (denote-interface-filter-top-level-next -1))
+
+(defun denote-interface-filter-top-level-next (N)
+  "Filter the buffer to the next index top-level notes.
+Go forward N top-levels.
+
+Uses `tablist' filters."
+  (interactive (list 1))
+  (let* ((path (denote-interface--get-entry-path))
+         (sig (denote-retrieve-filename-signature path))
+         (sig-top-level
+          (string-to-number (car (denote-interface--signature-decompose-into-groups sig))))
+         (min-top-level (or denote-interface--top-level-minimum
+                            (denote-interface--generate-caches)
+                            denote-interface--top-level-minimum))
+         (max-top-level (or denote-interface--top-level-maximum
+                            (denote-interface--generate-caches)
+                            denote-interface--top-level-maximum))
+         (next-top-level (+ N sig-top-level))
+         (next-top-level
+          (cond
+           ((and (<= min-top-level next-top-level) (<= next-top-level max-top-level))
+            next-top-level)
+           ((< next-top-level min-top-level)
+            (+ max-top-level sig-top-level))
+           ((< max-top-level next-top-level)
+            (- sig-top-level max-top-level))))
+         (regexp
+          (if (= next-top-level (string-to-number denote-interface-unsorted-signature))
+              (concat "^" denote-interface-unsorted-signature)
+            (concat "^" (number-to-string next-top-level) "\\."))))
+    ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
+    ;; is a previous filter made by this command.
+    (tablist-pop-filter 1)
+    (tablist-push-regexp-filter "Signature" regexp)))
+
 ;;;; Major-modes and keymaps
 (defvar denote-interface-mode-map
   (let ((km (make-sparse-keymap)))
-    (define-key km (kbd "//") #'denote-interface-edit-filter)
-    (define-key km (kbd "/r") #'denote-interface-edit-filter)
-    (define-key km (kbd "/?") #'denote-interface-edit-filter-presets)
-    (define-key km (kbd "/R") #'denote-interface-edit-filter-presets)
+    (define-key km (kbd "/d") #'denote-interface-edit-filter)
+    (define-key km (kbd "/D") #'denote-interface-edit-filter-presets)
     (define-key km (kbd "RET") #'denote-interface-goto-note)
     (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
     (define-key km (kbd "C-o") #'denote-interface-display-note)
     (define-key km (kbd "r") #'denote-interface-set-signature-list)
     (define-key km (kbd "R") #'denote-interface-set-signature-minibuffer)
+    (define-key km (kbd "M-p") #'denote-interface-filter-top-level-previous)
+    (define-key km (kbd "M-n") #'denote-interface-filter-top-level-next)
     km)
   "Mode map for `denote-interface-mode'.")
 
@@ -622,7 +687,10 @@ be modified will be set relative to that note. See
                     (list
                      (list 'denote-interface-starting-filter
                            '(:eval (format " [%s]" denote-interface-starting-filter))))))
-  (unless (and denote-interface--signature-sort-cache denote-interface--signature-propertize-cache)
+  (unless (and denote-interface--signature-sort-cache
+               denote-interface--signature-propertize-cache
+               denote-interface--top-level-minimum
+               denote-interface--top-level-maximum)
     (denote-interface--generate-caches))
   (setq tabulated-list-format
         `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
@@ -630,7 +698,7 @@ be modified will be set relative to that note. See
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-starting-filter)))
+                      (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
