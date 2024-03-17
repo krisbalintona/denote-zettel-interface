@@ -3,6 +3,7 @@
 ;; Copyright (C) 2024  Kristoffer Balintona
 
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
+;; Version: 1.0
 ;; Keywords: tools, extensions, convenience
 
 ;; This program is free software; you can redistribute it and/or modify
