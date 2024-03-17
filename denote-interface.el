@@ -217,8 +217,14 @@ used as the directory."
                (cl-loop for group in groups
                         collect (denote-interface--signature-decompose-elements-from-group group))))
              (level (1- (length decomposed)))
-             (face (if (string= sig denote-interface-unsorted-signature) 'shadow
-                     (intern (format "outline-%s" (+ 1 (% (1- level) 8))))))
+             (face
+              (cond
+               ((string= sig denote-interface-unsorted-signature)
+                'shadow)
+               ((= 0 (+ 1 (% (1- level) 8)))
+                'denote-faces-signature)
+               (t
+                (intern (format "outline-%s" (+ 1 (% (1- level) 8)))))))
              (propertized-sig
               (replace-regexp-in-string "=" (propertize "." 'face 'shadow)
                                         (propertize sig 'face face))))
@@ -275,10 +281,22 @@ Determine whether a denote file has a title based on the
 following rule derived from the file naming scheme:
 
 1. If the path does not have a \"--\", it has no title."
-  (if (or (not (string-match-p "--" path)))
-      (propertize "(No Title)" 'face 'font-lock-comment-face)
-    (propertize (denote-retrieve-front-matter-title-value path (denote-filetype-heuristics path))
-                'face 'denote-faces-title)))
+  (let* ((titlep (string-match-p "--" path))
+         (sig (denote-retrieve-filename-signature path))
+         (file-type (denote-filetype-heuristics path))
+         (title (denote-retrieve-front-matter-title-value path file-type))
+         (face
+          (cond
+           ;; When SIG is the unsorted signature
+           ((string= sig denote-interface-unsorted-signature)
+            'denote-faces-title)
+           ;; When PATH is a "indicator note" (i.e. a note strictly for
+           ;; indicator subdivisions among the numbered indexes)
+           ((not (cdr (denote-interface--signature-decompose-into-groups sig)))
+            'denote-faces-signature)
+           ;; Otherwise
+           (t 'denote-faces-title))))
+    (when titlep (propertize title 'face face))))
 
 ;;;;; Keywords
 (defun denote-interface--keywords (path)
@@ -656,8 +674,8 @@ Uses `tablist' filters."
             (- sig-top-level max-top-level))))
          (regexp
           (if (= next-top-level (string-to-number denote-interface-unsorted-signature))
-              (concat "^" denote-interface-unsorted-signature)
-            (concat "^" (number-to-string next-top-level) "\\."))))
+              (rx bol (literal denote-interface-unsorted-signature))
+            (rx bol (literal (number-to-string next-top-level)) (or (literal ".") eol)))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
@@ -698,7 +716,7 @@ Uses `tablist' filters."
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-starting-filter)))
+                           (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
