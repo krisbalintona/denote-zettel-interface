@@ -35,13 +35,13 @@
   "Interfaces for denote files."
   :group 'files)
 
-(defcustom denote-interface-filter "."
+(defcustom denote-interface-starting-filter "."
   "Default regexp filter for notes."
   :type 'sexp
   :group 'denote-interface)
 
-(defcustom denote-interface-filter-presets "=="
-  "The common `denote-interface-filter' filters."
+(defcustom denote-interface-starting-filter-presets "=="
+  "The common `denote-interface-starting-filter' filters."
   :type 'regexp
   :group 'denote-interface)
 
@@ -398,16 +398,16 @@ Note that this function needs to be performant, otherwise
 (defun denote-interface-edit-filter ()
   "Edit the currently existing filter."
   (interactive)
-  (setq denote-interface-filter
-        (read-from-minibuffer "Filter regex: " denote-interface-filter))
+  (setq denote-interface-starting-filter
+        (read-from-minibuffer "Filter regex: " denote-interface-starting-filter))
   (revert-buffer))
 
 (defun denote-interface-edit-filter-presets ()
   "Edit the currently existing filter."
   (interactive)
-  (setq denote-interface-filter
+  (setq denote-interface-starting-filter
         (completing-read "Filter preset: "
-                         (remove denote-interface-filter denote-interface-filter-presets)))
+                         (remove denote-interface-starting-filter denote-interface-starting-filter-presets)))
   (revert-buffer))
 
 (defun denote-interface-goto-note ()
@@ -617,8 +617,8 @@ be modified will be set relative to that note. See
   :after-hook (set (make-local-variable 'mode-line-misc-info)
                    (append
                     (list
-                     (list 'denote-interface-filter
-                           '(:eval (format " [%s]" denote-interface-filter))))))
+                     (list 'denote-interface-starting-filter
+                           '(:eval (format " [%s]" denote-interface-starting-filter))))))
   (unless (and denote-interface--signature-sort-cache denote-interface--signature-propertize-cache)
     (denote-interface--generate-caches))
   (setq tabulated-list-format
@@ -627,7 +627,7 @@ be modified will be set relative to that note. See
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-filter)))
+                           (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
