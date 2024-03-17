@@ -64,6 +64,9 @@
 (defvar denote-interface--signature-propertize-cache nil
   "Signature cache for `denote-interface--signature-propertize'.")
 
+(defvar denote-interface--signature-sort-cache nil
+  "Signature cache for sorting via `denote-interface--signature-lessp'.")
+
 (defvar denote-interface--signature-relations
   '("Sibling" "Child" "Top-level")
   "List of possible note relations based on signatures.
@@ -206,14 +209,33 @@ used as the directory."
              (propertized-sig
               (replace-regexp-in-string "=" (propertize "." 'face 'shadow)
                                         (propertize sig 'face face))))
-        (add-to-list 'denote-interface--signature-propertize-cache
-                     (cons sig propertized-sig))
         propertized-sig)))
 
 (defun denote-interface--signature (path)
   "Return propertized file signature from denote PATH identifier."
   (let ((sig (denote-retrieve-filename-signature path)))
     (denote-interface--signature-propertize sig)))
+
+;;;;;; Caching
+(defun denote-interface--generate-caches ()
+  "Generate caches relevant to signatures.
+Speeds up `denote-interface' expensive operations. Populates
+`denote-interface--signature-propertize-cache' (using
+`denote-interface--signature-propertize') and
+`denote-interface--signature-sort-cache' (using
+`denote-interface--signature-lessp').
+
+Call this function for its side effects."
+  (let ((sigs (cl-remove-duplicates
+               (mapcar (lambda (f) (denote-retrieve-filename-signature f))
+                       (denote-directory-files))
+               :test #'string-equal)))
+    (setq denote-interface--signature-sort-cache
+          (sort sigs #'denote-interface--signature-lessp)
+          denote-interface--signature-propertize-cache
+          (cl-loop for sig in sigs
+                   collect (cons sig (denote-interface--signature-propertize sig)))))
+  t)
 
 ;;;;; Titles
 (defun denote-interface--title (path)
@@ -325,26 +347,36 @@ Returns t if SIG1 should be sorted before SIG2, nil otherwise.
 This function splits SIG1 and SIG2 into indexical groups with
 `denote-interface--signature-decompose-into-groups' and compares the first
 group of each. If SIG1 is not definitively before SIG2, then recursively
-call this function on the remaining portion of the signature."
-  (let ((groups1 (denote-interface--signature-decompose-into-groups sig1))
-        (groups2 (denote-interface--signature-decompose-into-groups sig2)))
-    (cond
-     ;; Return t when: if sig1's groups have so far been after sig2's, but sig2
-     ;; has more groups while sig1 does not, then this means sig2 ultimately
-     ;; goes after sig1
-     ((and (not sig1) sig2) t)
-     ;; Return nil when: if all of sig1's groups go after sig2's groups, then
-     ;; sig2 is after sig1
-     ((not (and sig1 sig2)) nil)
-     ;; When the car of groups1 and groups2 are the same, then recursively call
-     ;; this function on the remaining portion of the signature
-     ((string= (car groups1) (car groups2))
-      (let ((remaining-groups1 (string-join (cdr groups1) "="))
-            (remaining-groups2 (string-join (cdr groups2) "=")))
-        (denote-interface--signature-lessp (unless (string-empty-p remaining-groups1) remaining-groups1)
-                                           (unless (string-empty-p remaining-groups2) remaining-groups2))))
-     (t
-      (denote-interface--signature-group-lessp (pop groups1) (pop groups2))))))
+call this function on the remaining portion of the signature.
+
+For faster computation after first invocation of `denote-interface',
+leverages `denote-interface--signature-sort-cache' as a cache."
+  (if (and (string-empty-p sig1) (string-empty-p sig2))
+      (let ((cache denote-interface--signature-sort-cache))
+        (and (member sig1 cache)
+             (member sig2 cache)
+             (< (cl-position sig1 cache :test #'equal)
+                (cl-position sig2 cache :test #'equal))))
+    (let ((groups1 (denote-interface--signature-decompose-into-groups sig1))
+          (groups2 (denote-interface--signature-decompose-into-groups sig2)))
+      (cond
+       ;; Return t when: if sig1's groups have so far been after sig2's, but
+       ;; sig2 has more groups while sig1 does not, then this means sig2
+       ;; ultimately goes after sig1
+       ((and (not sig1) sig2) t)
+       ;; Return nil when: if all of sig1's groups go after sig2's groups, then
+       ;; sig2 is after sig1
+       ((not (and sig1 sig2)) nil)
+       ;; When the car of groups1 and groups2 are the same, then recursively
+       ;; call this function on the remaining portion of the signature
+       ((string= (car groups1) (car groups2))
+        (let ((remaining-groups1 (string-join (cdr groups1) "="))
+              (remaining-groups2 (string-join (cdr groups2) "=")))
+          (denote-interface--signature-lessp
+           (unless (string-empty-p remaining-groups1) remaining-groups1)
+           (unless (string-empty-p remaining-groups2) remaining-groups2))))
+       (t
+        (denote-interface--signature-group-lessp (pop groups1) (pop groups2)))))))
 
 (defun denote-interface--signature-sorter (a b)
   "Tabulated-list sorter for signatures A and B.
@@ -521,13 +553,15 @@ variable `denote-directory' if called interactively."
 (define-derived-mode denote-interface-mode tabulated-list-mode "Denote Interface"
   "Major mode for interfacing with Denote files."
   :interactive nil
+  (unless (and denote-interface--signature-sort-cache denote-interface--signature-propertize-cache)
+    (denote-interface--generate-caches))
   (setq tabulated-list-format
         `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
           ("Title" ,denote-interface-title-column-width t)
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-filter)))
+                           (denote-directory-files denote-interface-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
