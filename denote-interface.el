@@ -260,12 +260,10 @@ following rule derived from the file naming scheme:
 ;;;;; Keywords
 (defun denote-interface--keywords (path)
   "Return propertized keywords of PATH."
-  (concat (propertize "(" 'face 'shadow)
-          (string-join
-           (mapcar (lambda (s) (propertize s 'face 'denote-faces-keywords))
-                   (denote-extract-keywords-from-path path))
-           (propertize ", " 'face 'shadow))
-          (propertize ")" 'face 'shadow)))
+  (string-join
+   (mapcar (lambda (s) (propertize s 'face 'denote-faces-keywords))
+           (denote-extract-keywords-from-path path))
+   (propertize ", " 'face 'shadow)))
 
 ;;;;; Entries
 (defun denote-interface--get-entry-path ()
