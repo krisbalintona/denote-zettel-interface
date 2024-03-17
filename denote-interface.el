@@ -71,24 +71,8 @@ See `denote-interface--determine-new-signature' docstring for more
 information.")
 
 ;;;; Functions
-;;;;; Internal
-;;;;;; Entries
-(defun denote-interface--get-entry-path ()
-  "Get the file path of the entry at point."
-  (let* ((tab-id (tabulated-list-get-id))
-         (denote-id (cl-first (string-split tab-id "-")))
-         (path (denote-get-path-by-id denote-id)))
-    path))
-
-(defun denote-interface--entries-to-paths ()
-  "Return list of file paths present in the `denote-interface' buffer."
-  (mapcar (lambda (entry)
-            (let* ((entry-id (car entry))
-                   (entry-denote-id (car (split-string entry-id "-"))))
-              (denote-get-path-by-id entry-denote-id)))
-          (funcall tabulated-list-entries)))
-
-;;;;;; Signatures
+;;;;; Signatures
+;;;;;; Parsing
 (defun denote-interface--signature-elements-head-tail (group)
   "Take a signature GROUP and return a cons.
 The car of this cons will be the \"front\" portion of the signature,
@@ -101,8 +85,8 @@ Right now, a \"signature portion\" is delimited by:
 - A change from a letter to number."
   (let (head tail)
     (save-match-data
-      ;; HACK 2024-03-04: I hardcode "=" as an additional delimiter of
-      ;; signature portions
+      ;; HACK 2024-03-04: I hardcode "=" as an additional delimiter of signature
+      ;; portions
       (if (string-match (if (s-numeric-p (substring group 0 1))
                             (rx (any alpha)) ; Numbered index head
                           (rx (any digit)))  ; Alphabet index head
@@ -125,59 +109,6 @@ Uses `denote-interface--signature-elements-head-tail'."
                (denote-interface--signature-decompose-elements-from-group tail)))
       group)))
 
-(defun denote-interface--signature-group-lessp (group1 group2)
-  "Compare the ordering of two groups.
-Returns t if GROUP1 should be sorted before GROUP2, nil otherwise."
-  (when (and group1
-             group2
-             (or (s-contains-p "=" group1) (s-contains-p "=" group2)))
-    (error "[denote-interface--signature-group-lessp] Does not accept strings with \"=\""))
-  (if (and group1 group2)
-      (let* ((elements1 (denote-interface--signature-elements-head-tail group1))
-             (elements2 (denote-interface--signature-elements-head-tail group2))
-             (head1 (car elements1))
-             (head2 (car elements2))
-             (tail1 (cdr elements1))
-             (tail2 (cdr elements2))
-             ;; HACK 2024-03-03: Right now, this treats uppercase and
-             ;; lowercase as the same, as well as ignores the difference
-             ;; between, e.g., "a" and "aa"
-             (index1 (string-to-number head1 16))
-             (index2 (string-to-number head2 16)))
-        (cond
-         ;; Group1 is earlier in order than group2
-         ((< index1 index2) t)
-         ;; Group2 is later than group2
-         ((> index1 index2) nil)
-         ;; Group1 has no tail while group2 has a tail, so it's later than
-         ;; group2
-         ((and (not tail1) tail2) t)
-         ;; Group1 has a tail while group2 has no tail, so it's earlier than
-         ;; group2
-         ((and tail1 (not tail2)) nil)
-
-         ;; equal, so they must have identical signatures. So do something
-         ;; with it now. (Returning nil seems to put the oldest earlier, so we
-         ;; do that.)
-         ((and (not tail1) (not tail2)) nil)
-         ;; Their indices are equal, and they still have a tail, so process
-         ;; those tails next
-         ((= index1 index2)
-          (denote-interface--signature-group-lessp tail1 tail2))))
-    ;; When one or both of group1 and group2 are not supplied
-    (cond
-     ;; If neither are supplied, then use `string-collate-lessp'
-     ((not (or group1 group2))
-      (string-collate-lessp group1 group2))
-     ;; If group1 is present but not group2, then return true so that group1
-     ;; can be earlier in the list
-     ((and group1 (not group2))
-      t)
-     ;; If group2 is present but not group1, then return nil to put group2
-     ;; earlier
-     ((and (not group1) group2)
-      nil))))
-
 (defun denote-interface--signature-decompose-into-groups (sig)
   "Decompose SIG into groups."
   (when sig
@@ -185,39 +116,10 @@ Returns t if GROUP1 should be sorted before GROUP2, nil otherwise."
         nil
       (string-split sig "="))))
 
-(defun denote-interface--signature-lessp (sig1 sig2)
-  "Compare two strings based on my signature sorting rules.
-Returns t if SIG1 should be sorted before SIG2, nil otherwise.
-
-This function splits SIG1 and SIG2 into indexical groups with
-`denote-interface--signature-decompose-into-groups' and compares the first
-group of each. If SIG1 is not definitively before SIG2, then recursively
-call this function on the remaining portion of the signature."
-  (let ((groups1 (denote-interface--signature-decompose-into-groups sig1))
-        (groups2 (denote-interface--signature-decompose-into-groups sig2)))
-    (cond
-     ;; Return t when: if sig1's groups have so far been after sig2's, but
-     ;; sig2 has more groups while sig1 does not, then this means sig2
-     ;; ultimately goes after sig1
-     ((and (not sig1) sig2) t)
-     ;; Return nil when: if all of sig1's groups go after sig2's groups, then
-     ;; sig2 is after sig1
-     ((not (and sig1 sig2)) nil)
-     ;; When the car of groups1 and groups2 are the same, then recursively
-     ;; call this function on the remaining portion of the signature
-     ((string= (car groups1) (car groups2))
-      (let ((remaining-groups1 (string-join (cdr groups1) "="))
-            (remaining-groups2 (string-join (cdr groups2) "=")))
-        (denote-interface--signature-lessp (unless (string-empty-p remaining-groups1) remaining-groups1)
-                                           (unless (string-empty-p remaining-groups2) remaining-groups2))))
-     (t
-      (denote-interface--signature-group-lessp (pop groups1) (pop groups2))))))
-
+;;;;;; Text property
 (defun denote-interface--group-text-property (text sig)
   "Add the `denote-interface-sig' text property to TEXT.
-Its value will be SIG.
-
-Call this function for its side effects."
+Its value will be SIG. Call this function for its side effects."
   (add-text-properties 0
                        (length text)
                        (list 'denote-interface-sig (if sig
@@ -225,6 +127,7 @@ Call this function for its side effects."
                                                      "No signature"))
                        text))
 
+;;;;;; Determining next signature
 (defun denote-interface--next-signature (sig)
   "Return the signature following SIG.
 The following signature for \"a\" is \"b\", for \"9\" is \"10\", for
@@ -287,22 +190,7 @@ used as the directory."
       (setq next-sig (denote-interface--next-signature next-sig)))
     next-sig))
 
-;;;;;; Titles
-(defun denote-interface--title (path)
-  "Return propertized title of PATH.
-If the denote file PATH has no title, return the string \"(No
-Title)\".  Otherwise return PATH's title.
-
-Determine whether a denote file has a title based on the
-following rule derived from the file naming scheme:
-
-1. If the path does not have a \"--\", it has no title."
-  (if (or (not (string-match-p "--" path)))
-      (propertize "(No Title)" 'face 'font-lock-comment-face)
-    (propertize (denote-retrieve-front-matter-title-value path (denote-filetype-heuristics path))
-                'face 'denote-faces-title)))
-
-;;;;;; Creating list
+;;;;;; Propertize
 (defun denote-interface--signature-propertize (sig)
   "Return propertized SIG for hierarchical visibility."
   (or (and (not sig) "")
@@ -327,19 +215,137 @@ following rule derived from the file naming scheme:
   (let ((sig (denote-retrieve-filename-signature path)))
     (denote-interface--signature-propertize sig)))
 
+;;;;; Titles
+(defun denote-interface--title (path)
+  "Return propertized title of PATH.
+If the denote file PATH has no title, return the string \"(No
+Title)\".  Otherwise return PATH's title.
+
+Determine whether a denote file has a title based on the
+following rule derived from the file naming scheme:
+
+1. If the path does not have a \"--\", it has no title."
+  (if (or (not (string-match-p "--" path)))
+      (propertize "(No Title)" 'face 'font-lock-comment-face)
+    (propertize (denote-retrieve-front-matter-title-value path (denote-filetype-heuristics path))
+                'face 'denote-faces-title)))
+
+;;;;; Keywords
+(defun denote-interface--keywords (path)
+  "Return propertized keywords of PATH."
+  (concat (propertize "(" 'face 'shadow)
+          (string-join
+           (mapcar (lambda (s) (propertize s 'face 'denote-faces-keywords))
+                   (denote-extract-keywords-from-path path))
+           (propertize ", " 'face 'shadow))
+          (propertize ")" 'face 'shadow)))
+
+;;;;; Entries
+(defun denote-interface--get-entry-path ()
+  "Get the file path of the entry at point."
+  (let* ((tab-id (tabulated-list-get-id))
+         (denote-id (cl-first (string-split tab-id "-")))
+         (path (denote-get-path-by-id denote-id)))
+    path))
+
+(defun denote-interface--entries-to-paths ()
+  "Return list of file paths present in the `denote-interface' buffer."
+  (mapcar (lambda (entry)
+            (let* ((entry-id (car entry))
+                   (entry-denote-id (car (split-string entry-id "-"))))
+              (denote-get-path-by-id entry-denote-id)))
+          (funcall tabulated-list-entries)))
+
+;;;;; Creating entries
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
   `(,(denote-retrieve-filename-identifier path)
     [,(denote-interface--signature path)
      ,(denote-interface--title path)
-     ,(concat (propertize "(" 'face 'shadow)
-              (string-join
-               (mapcar (lambda (s) (propertize s 'face 'denote-faces-keywords))
-                       (denote-extract-keywords-from-path path))
-               (propertize ", " 'face 'shadow))
-              (propertize ")" 'face 'shadow))]))
+     ,(denote-interface--keywords path)]))
 
-;;;;;; Sorters
+;;;;; Sorters
+(defun denote-interface--signature-group-lessp (group1 group2)
+  "Compare the ordering of two groups.
+Returns t if GROUP1 should be sorted before GROUP2, nil otherwise."
+  (when (and group1
+             group2
+             (or (s-contains-p "=" group1) (s-contains-p "=" group2)))
+    (error "[denote-interface--signature-group-lessp] Does not accept strings with \"=\""))
+  (if (and group1 group2)
+      (let* ((elements1 (denote-interface--signature-elements-head-tail group1))
+             (elements2 (denote-interface--signature-elements-head-tail group2))
+             (head1 (car elements1))
+             (head2 (car elements2))
+             (tail1 (cdr elements1))
+             (tail2 (cdr elements2))
+             ;; HACK 2024-03-03: Right now, this treats uppercase and lowercase
+             ;; as the same, as well as ignores the difference between, e.g.,
+             ;; "a" and "aa"
+             (index1 (string-to-number head1 16))
+             (index2 (string-to-number head2 16)))
+        (cond
+         ;; Group1 is earlier in order than group2
+         ((< index1 index2) t)
+         ;; Group2 is later than group2
+         ((> index1 index2) nil)
+         ;; Group1 has no tail while group2 has a tail, so it's later than
+         ;; group2
+         ((and (not tail1) tail2) t)
+         ;; Group1 has a tail while group2 has no tail, so it's earlier than
+         ;; group2
+         ((and tail1 (not tail2)) nil)
+         ;; Neither group2 nor group2 have a tail, and their indexes must be
+         ;; equal, so they must have identical signatures. So do something with
+         ;; it now. (Returning nil seems to put the oldest earlier, so we do
+         ;; that.)
+         ((and (not tail1) (not tail2)) nil)
+         ;; Their indices are equal, and they still have a tail, so process
+         ;; those tails next
+         ((= index1 index2)
+          (denote-interface--signature-group-lessp tail1 tail2))))
+    ;; When one or both of group1 and group2 are not supplied
+    (cond
+     ;; If neither are supplied, then use `string-collate-lessp'
+     ((not (or group1 group2))
+      (string-collate-lessp group1 group2))
+     ;; If group1 is present but not group2, then return true so that group1 can
+     ;; be earlier in the list
+     ((and group1 (not group2))
+      t)
+     ;; If group2 is present but not group1, then return nil to put group2
+     ;; earlier
+     ((and (not group1) group2)
+      nil))))
+
+(defun denote-interface--signature-lessp (sig1 sig2)
+  "Compare two strings based on my signature sorting rules.
+Returns t if SIG1 should be sorted before SIG2, nil otherwise.
+
+This function splits SIG1 and SIG2 into indexical groups with
+`denote-interface--signature-decompose-into-groups' and compares the first
+group of each. If SIG1 is not definitively before SIG2, then recursively
+call this function on the remaining portion of the signature."
+  (let ((groups1 (denote-interface--signature-decompose-into-groups sig1))
+        (groups2 (denote-interface--signature-decompose-into-groups sig2)))
+    (cond
+     ;; Return t when: if sig1's groups have so far been after sig2's, but sig2
+     ;; has more groups while sig1 does not, then this means sig2 ultimately
+     ;; goes after sig1
+     ((and (not sig1) sig2) t)
+     ;; Return nil when: if all of sig1's groups go after sig2's groups, then
+     ;; sig2 is after sig1
+     ((not (and sig1 sig2)) nil)
+     ;; When the car of groups1 and groups2 are the same, then recursively call
+     ;; this function on the remaining portion of the signature
+     ((string= (car groups1) (car groups2))
+      (let ((remaining-groups1 (string-join (cdr groups1) "="))
+            (remaining-groups2 (string-join (cdr groups2) "=")))
+        (denote-interface--signature-lessp (unless (string-empty-p remaining-groups1) remaining-groups1)
+                                           (unless (string-empty-p remaining-groups2) remaining-groups2))))
+     (t
+      (denote-interface--signature-group-lessp (pop groups1) (pop groups2))))))
+
 (defun denote-interface--signature-sorter (a b)
   "Tabulated-list sorter for signatures A and B.
 Note that this function needs to be performant, otherwise
@@ -352,36 +358,6 @@ Note that this function needs to be performant, otherwise
     (setq sig1 (replace-regexp-in-string "\\." "=" sig1)
           sig2 (replace-regexp-in-string "\\." "=" sig2))
     (denote-interface--signature-lessp sig1 sig2)))
-
-;;;; Major-mode
-(defvar denote-interface-mode-map
-  (let ((km (make-sparse-keymap)))
-    (define-key km (kbd "//") #'denote-interface-edit-filter)
-    (define-key km (kbd "/r") #'denote-interface-edit-filter)
-    (define-key km (kbd "/?") #'denote-interface-edit-filter-presets)
-    (define-key km (kbd "/R") #'denote-interface-edit-filter-presets)
-    (define-key km (kbd "RET") #'denote-interface-goto-note)
-    (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
-    (define-key km (kbd "C-o") #'denote-interface-display-note)
-    (define-key km (kbd "r") #'denote-interface-set-signature-interactively)
-    (define-key km (kbd "R") #'denote-interface-set-signature)
-    km)
-  "Mode map for `denote-interface-mode'.")
-
-(define-derived-mode denote-interface-mode tabulated-list-mode "Denote Interface"
-  "Major mode for interfacing with Denote files."
-  :interactive nil
-  (setq tabulated-list-format
-        `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
-          ("Title" ,denote-interface-title-column-width t)
-          ("Keywords" ,denote-interface-title-column-width nil)]
-        tabulated-list-entries
-        (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-filter)))
-        tabulated-list-sort-key '("Signature" . nil))
-  (use-local-map denote-interface-mode-map)
-  (tabulated-list-init-header)
-  (tabulated-list-print))
 
 ;;;; Commands
 (defun denote-interface-edit-filter ()
@@ -526,6 +502,36 @@ variable `denote-directory' if called interactively."
 
 (defalias 'list-denote-interface 'denote-interface-list
   "Alias of `denote-interface-list' command.")
+
+;;;; Major-mode and map
+(defvar denote-interface-mode-map
+  (let ((km (make-sparse-keymap)))
+    (define-key km (kbd "//") #'denote-interface-edit-filter)
+    (define-key km (kbd "/r") #'denote-interface-edit-filter)
+    (define-key km (kbd "/?") #'denote-interface-edit-filter-presets)
+    (define-key km (kbd "/R") #'denote-interface-edit-filter-presets)
+    (define-key km (kbd "RET") #'denote-interface-goto-note)
+    (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
+    (define-key km (kbd "C-o") #'denote-interface-display-note)
+    (define-key km (kbd "r") #'denote-interface-set-signature-interactively)
+    (define-key km (kbd "R") #'denote-interface-set-signature)
+    km)
+  "Mode map for `denote-interface-mode'.")
+
+(define-derived-mode denote-interface-mode tabulated-list-mode "Denote Interface"
+  "Major mode for interfacing with Denote files."
+  :interactive nil
+  (setq tabulated-list-format
+        `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
+          ("Title" ,denote-interface-title-column-width t)
+          ("Keywords" ,denote-interface-title-column-width nil)]
+        tabulated-list-entries
+        (lambda () (mapcar #'denote-interface--path-to-entry
+                      (denote-directory-files denote-interface-filter)))
+        tabulated-list-sort-key '("Signature" . nil))
+  (use-local-map denote-interface-mode-map)
+  (tabulated-list-init-header)
+  (tabulated-list-print))
 
 ;;; [End]
 (provide 'denote-interface)
