@@ -230,7 +230,7 @@ used as the directory."
                                         (propertize sig 'face face))))
         propertized-sig)))
 
-(defun denote-interface--signature (path)
+(defun denote-interface--file-signature-propertize (path)
   "Return propertized file signature from denote PATH identifier."
   (let ((sig (denote-retrieve-filename-signature path)))
     (denote-interface--signature-propertize sig)))
@@ -272,7 +272,7 @@ Call this function for its side effects."
   t)
 
 ;;;;; Titles
-(defun denote-interface--title (path)
+(defun denote-interface--file-title-propertize (path)
   "Return propertized title of PATH.
 If the denote file PATH has no title, return the string \"(No
 Title)\".  Otherwise return PATH's title.
@@ -299,7 +299,7 @@ following rule derived from the file naming scheme:
     (when titlep (propertize title 'face face))))
 
 ;;;;; Keywords
-(defun denote-interface--keywords (path)
+(defun denote-interface--file-keywords-propertize (path)
   "Return propertized keywords of PATH."
   (string-join
    (mapcar (lambda (s) (propertize s 'face 'denote-faces-keywords))
@@ -326,9 +326,9 @@ following rule derived from the file naming scheme:
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
   `(,(denote-retrieve-filename-identifier path)
-    [,(denote-interface--signature path)
-     ,(denote-interface--title path)
-     ,(denote-interface--keywords path)]))
+    [,(denote-interface--file-signature-propertize path)
+     ,(denote-interface--file-title-propertize path)
+     ,(denote-interface--file-keywords-propertize path)]))
 
 ;;;;; Sorters
 (defun denote-interface--signature-group-lessp (group1 group2)
@@ -546,9 +546,9 @@ the :omit-current non-nil. Otherwise,when called interactively in
          (affixation-function
           (lambda (files)
             (cl-loop for file in files collect
-                     (let* ((propertized-title (denote-interface--title file))
+                     (let* ((propertized-title (denote-interface--file-title-propertize file))
                             (sig (denote-retrieve-filename-signature file))
-                            (propertized-sig (denote-interface--signature file)))
+                            (propertized-sig (denote-interface--file-signature-propertize file)))
                        (denote-interface--group-text-property propertized-title sig)
                        (list propertized-title
                              (string-pad propertized-sig (+ largest-sig-length 3))
