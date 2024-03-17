@@ -544,15 +544,11 @@ the :omit-current non-nil. Otherwise,when called interactively in
                 title
               (get-text-property 0 'denote-interface-sig title))))
          (affixation-function
-          (lambda (cands)
-            (cl-loop for cand in cands collect
-                     (let* ((title (denote-retrieve-front-matter-title-value
-                                    cand (denote-filetype-heuristics cand)))
-                            (propertized-title (propertize title 'face 'denote-faces-title))
-                            (sig (denote-retrieve-filename-signature cand))
-                            (propertized-sig
-                             (replace-regexp-in-string "=" (propertize "." 'face 'shadow)
-                                                       (denote-interface--signature-propertize sig))))
+          (lambda (files)
+            (cl-loop for file in files collect
+                     (let* ((propertized-title (denote-interface--title file))
+                            (sig (denote-retrieve-filename-signature file))
+                            (propertized-sig (denote-interface--signature file)))
                        (denote-interface--group-text-property propertized-title sig)
                        (list propertized-title
                              (string-pad propertized-sig (+ largest-sig-length 3))
