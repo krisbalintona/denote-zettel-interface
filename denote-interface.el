@@ -66,6 +66,9 @@
   :group 'denote-interface)
 
 ;;;;; Internal
+(defvar denote-interface--id-to-path-cache nil
+  "Signature cache for `denote-interface--get-entry-path'.")
+
 (defvar denote-interface--signature-propertize-cache nil
   "Signature cache for `denote-interface--signature-propertize'.")
 
@@ -236,21 +239,23 @@ used as the directory."
 ;;;;;; Caching
 (defun denote-interface--generate-caches ()
   "Generate caches relevant to signatures.
-Speeds up `denote-interface' expensive operations. Populates
-`denote-interface--signature-propertize-cache' (using
-`denote-interface--signature-propertize') and
-`denote-interface--signature-sort-cache' (using
-`denote-interface--signature-lessp').
-
-Also sets `denote-interface--top-level-minimum' and
-`denote-interface--top-level-maximum' buffer locally.
+Speeds up `denote-interface' expensive operations. Populates the
+following internal variables:
+- `denote-interface--id-to-path-cache'
+- `denote-interface--signature-propertize-cache'
+- `denote-interface--signature-sort-cache'
+- `denote-interface--top-level-minimum'
+- `denote-interface--top-level-maximum'
 
 Call this function for its side effects."
-  (let ((sigs (cl-remove-duplicates
-               (mapcar (lambda (f) (denote-retrieve-filename-signature f))
-                       (denote-directory-files))
-               :test #'string-equal)))
-    (setq denote-interface--signature-sort-cache
+  (let* ((files (denote-directory-files))
+         (sigs (cl-remove-duplicates
+                (mapcar (lambda (f) (denote-retrieve-filename-signature f)) files)
+                :test #'string-equal)))
+    (setq denote-interface--id-to-path-cache
+          (cl-loop for file in files
+                   collect (cons (denote-retrieve-filename-identifier file) file))
+          denote-interface--signature-sort-cache
           (sort sigs #'denote-interface--signature-lessp)
           denote-interface--signature-propertize-cache
           (cl-loop for sig in sigs
@@ -307,17 +312,24 @@ following rule derived from the file naming scheme:
    (propertize ", " 'face 'shadow)))
 
 ;;;;; Entries
-(defun denote-interface--get-entry-path ()
-  "Get the file path of the entry at point."
-  (tabulated-list-get-id))
+(defun denote-interface--get-entry-path (&optional id)
+  "Get the file path of the entry at point.
+ID is the ID of the `tabulated-list' entry."
+  (or (cdr (assoc-string id denote-interface--id-to-path-cache))
+      (let* ((id (or id (tabulated-list-get-id)))
+             (path (denote-get-path-by-id id)))
+        (setf (alist-get id denote-interface--id-to-path-cache) path)
+        path)))
 
 (defun denote-interface--entries-to-paths ()
   "Return list of file paths present in the `denote-interface' buffer."
-  (mapcar #'car (funcall tabulated-list-entries)))
+  (mapcar (lambda (entry)
+            (denote-interface--get-entry-path (car entry)))
+          (funcall tabulated-list-entries)))
 
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
-  `(,path
+  `(,(denote-retrieve-filename-identifier path)
     [,(denote-interface--file-signature-propertize path)
      ,(denote-interface--file-title-propertize path)
      ,(denote-interface--file-keywords-propertize path)]))
@@ -694,7 +706,8 @@ Uses `tablist' filters."
                     (list
                      (list 'denote-interface-starting-filter
                            '(:eval (format " [%s]" denote-interface-starting-filter))))))
-  (unless (and denote-interface--signature-sort-cache
+  (unless (and denote-interface--id-to-path-cache
+               denote-interface--signature-sort-cache
                denote-interface--signature-propertize-cache
                denote-interface--top-level-minimum
                denote-interface--top-level-maximum)
