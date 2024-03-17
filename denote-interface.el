@@ -311,23 +311,16 @@ following rule derived from the file naming scheme:
 ;;;;; Entries
 (defun denote-interface--get-entry-path ()
   "Get the file path of the entry at point."
-  (let* ((tab-id (tabulated-list-get-id))
-         (denote-id (cl-first (string-split tab-id "-")))
-         (path (denote-get-path-by-id denote-id)))
-    path))
+  (tabulated-list-get-id))
 
 (defun denote-interface--entries-to-paths ()
   "Return list of file paths present in the `denote-interface' buffer."
-  (mapcar (lambda (entry)
-            (let* ((entry-id (car entry))
-                   (entry-denote-id (car (split-string entry-id "-"))))
-              (denote-get-path-by-id entry-denote-id)))
-          (funcall tabulated-list-entries)))
+  (mapcar #'car (funcall tabulated-list-entries)))
 
 ;;;;; Creating entries
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
-  `(,(denote-retrieve-filename-identifier path)
+  `(,path
     [,(denote-interface--file-signature-propertize path)
      ,(denote-interface--file-title-propertize path)
      ,(denote-interface--file-keywords-propertize path)]))
@@ -714,7 +707,7 @@ Uses `tablist' filters."
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-starting-filter)))
+                      (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (set-keymap-parent denote-interface-mode-map tablist-mode-map)
   (use-local-map denote-interface-mode-map)
