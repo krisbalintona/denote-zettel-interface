@@ -294,7 +294,7 @@ following rule derived from the file naming scheme:
             'denote-faces-title)
            ;; When PATH is a "indicator note" (i.e. a note strictly for
            ;; indicator subdivisions among the numbered indexes)
-           ((not (cdr (denote-interface--signature-decompose-into-groups sig)))
+           ((and sig (not (cdr (denote-interface--signature-decompose-into-groups sig))))
             'denote-faces-signature)
            ;; Otherwise
            (t 'denote-faces-title))))
