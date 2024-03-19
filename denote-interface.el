@@ -29,6 +29,7 @@
 (require 'denote)
 (require 's)
 (require 'subr-x)
+(require 'ol)
 
 ;;;; Variables
 ;;;;; Customizable
@@ -682,6 +683,25 @@ Uses `tablist' filters."
     (tablist-pop-filter 1)
     (tablist-push-regexp-filter "Signature" regexp)))
 
+;;;;; Storing
+(defun denote-interface-store-link ()
+  "Call `org-store-link' on the entry at point if an org file."
+  (interactive)
+  (when-let* ((file (denote-interface--get-entry-path))
+              (file-id (denote-retrieve-filename-identifier file))
+              (description (denote--link-get-description file))
+              (orgp (string= "org" (file-name-extension file))))
+    ;; Populate `org-store-link-plist'. Inspired by `denote-link-ol-store'
+    (org-link-store-props
+     :type "denote"
+     :description description
+     :link (concat "denote:" file-id))
+    ;; Then add to `org-stored-links'
+    (push (list (plist-get org-store-link-plist :link)
+                (plist-get org-store-link-plist :description))
+          org-stored-links)
+    (message "Stored %s!" (file-relative-name file denote-directory))))
+
 ;;;; Major-modes and keymaps
 (defvar denote-interface-mode-map
   (let ((km (make-sparse-keymap)))
@@ -692,6 +712,7 @@ Uses `tablist' filters."
     (define-key km (kbd "C-o") #'denote-interface-display-note)
     (define-key km (kbd "r") #'denote-interface-set-signature-list)
     (define-key km (kbd "R") #'denote-interface-set-signature-minibuffer)
+    (define-key km (kbd "w") #'denote-interface-store-link)
     (define-key km (kbd "M-p") #'denote-interface-filter-top-level-previous)
     (define-key km (kbd "M-n") #'denote-interface-filter-top-level-next)
     km)
