@@ -200,7 +200,10 @@ used as the directory."
                      ("top-level"
                       (let ((top-level-index 1))
                         (while (denote-directory-files
-                                (rx "==" (literal (number-to-string top-level-index)) "=1"))
+                                (rx (literal dir)
+                                    (1+ anychar)
+                                    "=="
+                                    (literal (number-to-string top-level-index)) "=1"))
                           (setq top-level-index (1+ top-level-index)))
                         (concat (number-to-string top-level-index) "=1"))))))
     (while (member next-sig
