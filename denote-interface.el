@@ -3,7 +3,9 @@
 ;; Copyright (C) 2024  Kristoffer Balintona
 
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
+;; Homepage: https://github.com/krisbalintona/denote-interface
 ;; Version: 1.0
+;; Package-Requires: ((emacs "29.1") (org "9.3"))
 ;; Keywords: tools, extensions, convenience
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -761,9 +763,6 @@ If NAME is supplied, that will be the name of the buffer."
         (setq buffer-file-coding-system 'utf-8)
         (denote-interface-mode)))
     (display-buffer buf-name)))
-
-(defalias 'list-denote-interface 'denote-interface-list
-  "Alias of `denote-interface-list' command.")
 
 ;;; [End]
 (provide 'denote-interface)
