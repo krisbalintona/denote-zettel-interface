@@ -448,6 +448,7 @@ Note that this function needs to be performant, otherwise
 
 ;;;; Commands
 ;;;;; Filtering
+;;;###autoload
 (defun denote-interface-edit-filter ()
   "Edit the currently existing filter."
   (interactive)
@@ -455,6 +456,7 @@ Note that this function needs to be performant, otherwise
         (read-from-minibuffer "Filter regex: " denote-interface-starting-filter))
   (revert-buffer))
 
+;;;###autoload
 (defun denote-interface-edit-filter-presets ()
   "Edit the currently existing filter."
   (interactive)
@@ -464,22 +466,26 @@ Note that this function needs to be performant, otherwise
   (revert-buffer))
 
 ;;;;; Viewing
+;;;###autoload
 (defun denote-interface-goto-note ()
   "Jump to the note corresponding to the entry at point."
   (interactive)
   (find-file (denote-interface--get-entry-path)))
 
+;;;###autoload
 (defun denote-interface-goto-note-other-window ()
   "Open in another window the note corresponding to the entry at point."
   (interactive)
   (find-file-other-window (denote-interface--get-entry-path)))
 
+;;;###autoload
 (defun denote-interface-display-note ()
   "Just display the current note in another window."
   (interactive)
   (display-buffer (find-file-noselect (denote-interface--get-entry-path)) t))
 
 ;;;;; Signatures
+;;;###autoload
 (defun denote-interface-set-signature (path new-sig)
   "Set the note at point's (in `denote-interface' buffer) signature.
 Can be called interactively from a denote note or a `denote-interface'
@@ -506,6 +512,7 @@ NEW-SIG."
          (denote-rename-no-confirm t))  ; Want it automatic
     (denote-rename-file path title keywords new-sig)))
 
+;;;###autoload
 (defun denote-interface-set-signature-minibuffer (files)
   "Set the note at point's signature by selecting another note.
 Select another note and choose whether to be its the sibling or child.
@@ -583,6 +590,7 @@ the :omit-current non-nil. Otherwise,when called interactively in
          (denote-rename-no-confirm t))
     (denote-interface-set-signature file-at-point new-sig)))
 
+;;;###autoload
 (defun denote-interface-set-signature-list (files)
   "Set the note at point's signature by selecting another note.
 Like `denote-interface-set-signature-minibuffer' but uses
@@ -648,12 +656,14 @@ be modified will be set relative to that note. See
       (use-local-map keymap))))
 
 ;;;;; Navigation
+;;;###autoload
 (defun denote-interface-filter-top-level-previous ()
   "Filter the buffer to the next index top-level notes.
 Uses `tablist' filters."
   (interactive)
   (denote-interface-filter-top-level-next -1))
 
+;;;###autoload
 (defun denote-interface-filter-top-level-next (N)
   "Filter the buffer to the next index top-level notes.
 Go forward N top-levels.
@@ -689,6 +699,7 @@ Uses `tablist' filters."
     (tablist-push-regexp-filter "Signature" regexp)))
 
 ;;;;; Storing
+;;;###autoload
 (defun denote-interface-store-link ()
   "Call `org-store-link' on the entry at point if an org file."
   (interactive)
