@@ -769,6 +769,8 @@ If NAME is supplied, that will be the name of the buffer."
   (let ((buf-name (or name
                       (format "*Denote notes in %s*"
                               (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer)))))))
+    ;; TODO 2024-03-28: Haven't figured out how to adhere to the current
+    ;; denote-silo convention of setting `denote-directory' in .dir-locals
     (unless (get-buffer buf-name)
       (with-current-buffer (get-buffer-create buf-name)
         (setq buffer-file-coding-system 'utf-8)
