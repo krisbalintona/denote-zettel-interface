@@ -641,7 +641,7 @@ be modified will be set relative to that note. See
           `(lambda ()
              "Kill buffer with confirmation"
              (interactive)
-             (when (y-or-n-p (format "Leave before modify signature of %s?"
+             (when (y-or-n-p (format "Leave before modifying signature of %s?"
                                      ,(denote-retrieve-front-matter-title-value file-at-point file-type)))
                (kill-buffer ,buf-name))))
          (keymap (make-sparse-keymap)))
