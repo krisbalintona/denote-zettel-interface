@@ -601,7 +601,14 @@ FILES are the list of files shown, defaulting to all denote files. When
 be modified will be set relative to that note. See
 `denote-interface--determine-new-signature' for more details."
   (interactive (list (if (eq major-mode 'denote-interface-mode)
-                         (denote-interface--entries-to-paths)
+                         (progn
+                           (revert-buffer) ; Ensure entries align with changes to files
+                           (cl-remove
+                            ;; Ensure the note whose signature is being modified
+                            ;; is not in the resultant list of files
+                            (denote-interface--get-entry-path)
+                            (denote-interface--entries-to-paths)
+                            :test #'string-equal))
                        (denote-directory-files
                         (rx (literal (concat (car (last (butlast (file-name-split (buffer-file-name)) 1)))
                                              "/"))
@@ -756,7 +763,7 @@ Uses `tablist' filters."
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-starting-filter)))
+                           (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
