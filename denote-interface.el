@@ -664,11 +664,15 @@ be modified will be set relative to that note. See
 
 ;;;;; Navigation
 ;;;###autoload
-(defun denote-interface-filter-top-level-previous ()
+(defun denote-interface-filter-top-level-previous (N)
   "Filter the buffer to the next index top-level notes.
+Go backward N top-levels.
+
 Uses `tablist' filters."
-  (interactive)
-  (denote-interface-filter-top-level-next -1))
+  (interactive (list (or (and (numberp current-prefix-arg)
+                              (- current-prefix-arg))
+                         -1)))
+  (denote-interface-filter-top-level-next N))
 
 ;;;###autoload
 (defun denote-interface-filter-top-level-next (N)
@@ -676,7 +680,9 @@ Uses `tablist' filters."
 Go forward N top-levels.
 
 Uses `tablist' filters."
-  (interactive (list 1))
+  (interactive (list (or (and (numberp current-prefix-arg)
+                              current-prefix-arg)
+                         1)))
   (let* ((path (denote-interface--get-entry-path))
          (sig (denote-retrieve-filename-signature path))
          (sig-top-level
