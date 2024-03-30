@@ -728,8 +728,8 @@ Uses `tablist' filters."
 ;;;; Major-modes and keymaps
 (defvar denote-interface-mode-map
   (let ((km (make-sparse-keymap)))
-    (define-key km (kbd "/d") #'denote-interface-edit-filter)
-    (define-key km (kbd "/D") #'denote-interface-edit-filter-presets)
+    (define-key km (kbd "/d") #'denote-interface-edit-filter-presets)
+    (define-key km (kbd "/D") #'denote-interface-edit-filter)
     (define-key km (kbd "RET") #'denote-interface-goto-note)
     (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
     (define-key km (kbd "C-o") #'denote-interface-display-note)
