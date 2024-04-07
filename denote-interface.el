@@ -336,10 +336,11 @@ ID is the ID of the `tabulated-list' entry."
 
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
-  `(,(denote-retrieve-filename-identifier path)
-    [,(denote-interface--file-signature-propertize path)
-     ,(denote-interface--file-title-propertize path)
-     ,(denote-interface--file-keywords-propertize path)]))
+  (when path
+    `(,(denote-retrieve-filename-identifier path)
+      [,(denote-interface--file-signature-propertize path)
+       ,(denote-interface--file-title-propertize path)
+       ,(denote-interface--file-keywords-propertize path)])))
 
 ;;;;; Sorters
 (defun denote-interface--signature-group-lessp (group1 group2)
@@ -769,7 +770,7 @@ Uses `tablist' filters."
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-starting-filter)))
+                      (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
