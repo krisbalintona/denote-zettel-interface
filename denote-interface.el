@@ -79,14 +79,6 @@
 (defvar denote-interface--signature-sort-cache nil
   "Signature cache for sorting via `denote-interface--signature-lessp'.")
 
-(defvar denote-interface--top-level-minimum nil
-  "Minimum top-level index for current buffer.")
-(make-variable-buffer-local 'denote-interface--top-level-minimum)
-
-(defvar denote-interface--top-level-maximum nil
-  "Maximum top-level index for current buffer.")
-(make-variable-buffer-local 'denote-interface--top-level-maximum)
-
 (defvar denote-interface--signature-relations
   '("Sibling" "Child" "Top-level")
   "List of possible note relations based on signatures.
@@ -266,21 +258,7 @@ Call this function for its side effects."
           (sort sigs #'denote-interface--signature-lessp)
           denote-interface--signature-propertize-cache
           (cl-loop for sig in sigs
-                   collect (cons sig (denote-interface--signature-propertize sig)))
-          denote-interface--top-level-minimum
-          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                   minimize (string-to-number
-                             (or (car
-                                  (denote-interface--signature-decompose-into-groups
-                                   (denote-retrieve-filename-signature f)))
-                                 "")))
-          denote-interface--top-level-maximum
-          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                   maximize (string-to-number
-                             (or (car
-                                  (denote-interface--signature-decompose-into-groups
-                                   (denote-retrieve-filename-signature f)))
-                                 "")))))
+                   collect (cons sig (denote-interface--signature-propertize sig)))))
   t)
 
 ;;;;; Titles
@@ -688,12 +666,18 @@ Uses `tablist' filters."
          (sig (denote-retrieve-filename-signature path))
          (sig-top-level
           (string-to-number (car (denote-interface--signature-decompose-into-groups sig))))
-         (min-top-level (or denote-interface--top-level-minimum
-                            (denote-interface--generate-caches)
-                            denote-interface--top-level-minimum))
-         (max-top-level (or denote-interface--top-level-maximum
-                            (denote-interface--generate-caches)
-                            denote-interface--top-level-maximum))
+         (min-top-level (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                                 minimize (string-to-number
+                                           (or (car
+                                                (denote-interface--signature-decompose-into-groups
+                                                 (denote-retrieve-filename-signature f)))
+                                               ""))))
+         (max-top-level (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                                 maximize (string-to-number
+                                           (or (car
+                                                (denote-interface--signature-decompose-into-groups
+                                                 (denote-retrieve-filename-signature f)))
+                                               ""))))
          (next-top-level (+ N sig-top-level))
          (next-top-level
           (cond
