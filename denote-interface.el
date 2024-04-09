@@ -243,8 +243,6 @@ following internal variables:
 - `denote-interface--id-to-path-cache'
 - `denote-interface--signature-propertize-cache'
 - `denote-interface--signature-sort-cache'
-- `denote-interface--top-level-minimum'
-- `denote-interface--top-level-maximum'
 
 Call this function for its side effects."
   (let* ((files (denote-directory-files))
@@ -744,9 +742,7 @@ Uses `tablist' filters."
                            '(:eval (format " [%s]" denote-interface-starting-filter))))))
   (unless (and denote-interface--id-to-path-cache
                denote-interface--signature-sort-cache
-               denote-interface--signature-propertize-cache
-               denote-interface--top-level-minimum
-               denote-interface--top-level-maximum)
+               denote-interface--signature-propertize-cache)
     (denote-interface--generate-caches))
   (setq tabulated-list-format
         `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
