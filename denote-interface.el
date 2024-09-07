@@ -783,7 +783,10 @@ Uses `tablist' filters."
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
     (when regexp
-      (tablist-push-regexp-filter "Signature" regexp))))
+      (tablist-push-regexp-filter "Signature" regexp)
+      (beginning-of-buffer)
+      (tablist-skip-invisible-entries)
+      (goto-char (1+ (point))))))
 
 ;;;;; Storing
 ;;;###autoload
