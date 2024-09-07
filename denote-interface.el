@@ -633,6 +633,49 @@ Uses `tablist' filters."
     (tablist-pop-filter 1)
     (tablist-push-regexp-filter "Signature" regexp)))
 
+;;;###autoload
+(defun denote-interface-filter-down ()
+  "Filter the buffer to the children of the current note.
+Uses `tablist' filters."
+  (interactive)
+  (let* ((path (denote-interface--get-entry-path))
+         (sig (denote-retrieve-filename-signature path))
+         (child-sig
+          (if (string-match "=" sig)
+              (denote-interface--first-child-signature sig)
+            (concat sig ".1")))
+         (child-sig
+          ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+          ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+          ;; fragile, so try to find a more robust alternative
+          (replace-regexp-in-string "=" "." child-sig))
+         (regexp (rx bol (literal child-sig))))
+    ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
+    ;; is a previous filter made by this command.
+    (tablist-pop-filter 1)
+    (tablist-push-regexp-filter "Signature" regexp)))
+
+;;;###autoload
+(defun denote-interface-filter-up ()
+  "Filter the buffer to the parent of the current note and its children.
+Uses `tablist' filters."
+  (interactive)
+  (let* ((path (denote-interface--get-entry-path))
+         (sig (denote-retrieve-filename-signature path))
+         (parent-sig
+          (denote-interface--signature-unnormalize
+           (string-join (butlast (denote-interface--signature-split sig)) "=")))
+         (parent-sig
+          ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+          ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+          ;; fragile, so try to find a more robust alternative
+          (replace-regexp-in-string "=" "." parent-sig))
+         (regexp (rx bol (literal parent-sig))))
+    ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
+    ;; is a previous filter made by this command.
+    (tablist-pop-filter 1)
+    (tablist-push-regexp-filter "Signature" regexp)))
+
 ;;;;; Storing
 ;;;###autoload
 (defun denote-interface-store-link ()
@@ -666,6 +709,8 @@ Uses `tablist' filters."
     (define-key km (kbd "w") #'denote-interface-store-link)
     (define-key km (kbd "M-p") #'denote-interface-filter-top-level-previous)
     (define-key km (kbd "M-n") #'denote-interface-filter-top-level-next)
+    (define-key km (kbd "M-u") #'denote-interface-filter-up)
+    (define-key km (kbd "M-d") #'denote-interface-filter-down)
     km)
   "Mode map for `denote-interface-mode'.")
 (set-keymap-parent denote-interface-mode-map tablist-mode-map)
