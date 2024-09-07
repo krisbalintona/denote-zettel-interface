@@ -144,21 +144,24 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
 For example, when SIG is \"13b3c,\" the returned signature is \"13b3c1.\""
   (concat sig (if (s-numeric-p (substring sig (1- (length sig)))) "a" "1")))
 
-(defun denote-interface--next-sibling-signature (sig)
+(defun denote-interface--next-sibling-signature (sig &optional previous)
   "Return the next sibling signature of SIG.
 For example, the next sibling signature for \"a\" is \"b\", for \"9\" is
-\"10\", for \"z\" is \"A\", and for \"Z\" \"aa\"."
+\"10\", for \"z\" is \"A\", and for \"Z\" \"aa\".
+
+If PREVIOUS is non-nil, then the previous sibling's signature will be
+calculated instead."
   (let* ((parts (denote-interface--signature-split sig))
          tail char next)
     (setq tail (car (last parts))
           char (string-to-char tail)
           next (cond ((s-numeric-p tail) ; A number
                       (number-to-string
-                       (1+ (string-to-number tail))))
+                       (+ (if previous -1 1) (string-to-number tail))))
                      ((and (>= char 97) (< char 122)) ; Between "a" and "z"
-                      (char-to-string (1+ char)))
+                      (char-to-string (+ (if previous -1 1) char)))
                      ((and (>= char 65) (< char 90)) ; Between "A" and "Z"
-                      (char-to-string (1+ char)))
+                      (char-to-string (+ (if previous -1 1) char)))
                      ((= 122 char) "A") ; Is "z"
                      ;; REVIEW 2024-03-03: Presently, we choose to go into
                      ;; double-letters when we go above Z
