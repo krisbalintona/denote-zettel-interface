@@ -165,6 +165,11 @@ For example, the next sibling signature for \"a\" is \"b\", for \"9\" is
                      ((= 90 char) "aa"))) ; Is "Z"
     (concat (string-remove-suffix tail sig) next)))
 
+(defun denote-interface--parent-signature (sig)
+  "Return the parent signature of SIG."
+  (denote-interface--signature-unnormalize
+   (string-join (butlast (denote-interface--signature-split sig)) "=")))
+
 (defun denote-interface--determine-new-signature (sig relation &optional dir)
   "Return the next available signature relative to SIG.
 The new signature depends on RELATION, a string in
@@ -664,9 +669,7 @@ Uses `tablist' filters."
   (interactive)
   (let* ((path (denote-interface--get-entry-path))
          (sig (denote-retrieve-filename-signature path))
-         (parent-sig
-          (denote-interface--signature-unnormalize
-           (string-join (butlast (denote-interface--signature-split sig)) "=")))
+         (parent-sig (denote-interface--parent-signature sig))
          (regexp
           (cond
            ((= 1 (length parent-sig))
