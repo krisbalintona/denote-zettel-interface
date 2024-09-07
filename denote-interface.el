@@ -627,7 +627,7 @@ Uses `tablist' filters."
          (regexp
           (if (= next-top-level (string-to-number denote-interface-unsorted-signature))
               (rx bol (literal denote-interface-unsorted-signature))
-            (rx bol (literal (number-to-string next-top-level)) (not digit)))))
+            (rx bol (literal (number-to-string next-top-level)) (or eol (not digit))))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
@@ -643,13 +643,15 @@ Uses `tablist' filters."
          (child-sig
           (if (string-match "=" sig)
               (denote-interface--first-child-signature sig)
-            (concat sig ".1")))
-         (child-sig
-          ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-          ;; `denote-interface--path-to-entry' I do the reverse. This is quite
-          ;; fragile, so try to find a more robust alternative
-          (replace-regexp-in-string "=" "." child-sig))
-         (regexp (rx bol (literal child-sig))))
+            (concat sig "=1"))) ; Don't use "." yet since it breaks the following regexp search
+         (regexp
+          (if (denote-directory-files
+               (rx (regexp denote-interface-starting-filter) (literal child-sig)))
+              ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+              ;; `denote-interface--path-to-entry' I do the reverse. This is
+              ;; quite fragile, so try to find a more robust alternative
+              (rx bol (literal (replace-regexp-in-string "=" "." child-sig)))
+            (rx bol (literal (replace-regexp-in-string "=" "." sig))))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
@@ -665,16 +667,20 @@ Uses `tablist' filters."
          (parent-sig
           (denote-interface--signature-unnormalize
            (string-join (butlast (denote-interface--signature-split sig)) "=")))
-         (parent-sig
-          ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-          ;; `denote-interface--path-to-entry' I do the reverse. This is quite
-          ;; fragile, so try to find a more robust alternative
-          (replace-regexp-in-string "=" "." parent-sig))
-         (regexp (rx bol (literal parent-sig))))
+         (regexp
+          (cond
+           ((= 1 (length parent-sig))
+            (rx bol (literal parent-sig) (or eol (not digit))))
+           ((not (string-empty-p parent-sig))
+            ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+            ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+            ;; fragile, so try to find a more robust alternative
+            (rx bol (literal (replace-regexp-in-string "=" "." parent-sig)))))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
-    (tablist-push-regexp-filter "Signature" regexp)))
+    (when regexp
+      (tablist-push-regexp-filter "Signature" regexp))))
 
 ;;;;; Storing
 ;;;###autoload
