@@ -312,6 +312,14 @@ ID is the ID of the `tabulated-list' entry."
 
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
+  ;; Sometimes PATH will not exist, mostly because the file has been renamed.
+  ;; The following corrects PATH. This method relies on the persistence of the
+  ;; identifier; if the identifier of the file has changed, then the function
+  ;; will return nil (the file will not be shown in the denote-interface
+  ;; buffer).
+  (unless (file-regular-p path)
+    (setq path
+          (car (denote-directory-files (denote-retrieve-filename-identifier path)))))
   (when path
     `(,(denote-retrieve-filename-identifier path)
       [,(denote-interface--file-signature-propertize path)
