@@ -142,9 +142,14 @@ Its value will be SIG. Call this function for its side effects."
                                                      "No signature"))
                        text))
 
-;;;;;; Determining next signature
-(defun denote-interface--next-signature (sig)
-  "Return the signature following SIG.
+;;;;;; Calculating signatures based on relation
+(defun denote-interface--first-available-child-signature (sig)
+  "Return the first child signature of SIG.
+For example, when SIG is \"13b3c,\" the returned signature is \"13b3c1.\""
+  (concat sig (if (s-numeric-p (substring sig (1- (length sig)))) "a" "1")))
+
+(defun denote-interface--first-available-sibling-signature (sig)
+  "Return the next signature of SIG.
 The following signature for \"a\" is \"b\", for \"9\" is \"10\", for
 \"z\" is \"A\", and for \"Z\" \"aa\"."
   (let* ((groups (denote-interface--signature-decompose-into-groups sig))
@@ -182,15 +187,14 @@ directory rather than the entirety of variable `denote-directory'. DIR
 can also be a file. If it is, the parent directory of that file will be
 used as the directory."
   (let* ((relation (or (downcase relation) "child"))
-         (dir (when dir
-                (file-name-directory (file-relative-name dir denote-directory))))
+         (dir
+          (file-name-directory
+           (file-relative-name (or dir default-directory) denote-directory)))
          (next-sig (pcase relation
                      ("child"
-                      (concat sig
-                              (if (s-numeric-p (substring sig (1- (length sig))))
-                                  "a" "1")))
+                      (denote-interface--first-available-child-signature sig))
                      ("sibling"
-                      (denote-interface--next-signature sig))
+                      (denote-interface--first-available-sibling-signature sig))
                      ("top-level"
                       (let ((top-level-index 1))
                         (while (denote-directory-files
@@ -203,7 +207,7 @@ used as the directory."
     (while (member next-sig
                    (cl-loop for f in (denote-directory-files dir)
                             collect (denote-retrieve-filename-signature f)))
-      (setq next-sig (denote-interface--next-signature next-sig)))
+      (setq next-sig (denote-interface--first-available-sibling-signature next-sig)))
     next-sig))
 
 ;;;;;; Propertize
