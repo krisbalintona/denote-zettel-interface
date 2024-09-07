@@ -772,7 +772,8 @@ Uses `tablist' filters."
          (parent-sig (denote-interface--parent-signature sig))
          (regexp
           (cond
-           ((= 1 (length parent-sig))
+           ((string-empty-p parent-sig) nil)
+           ((not (string-match-p "=" parent-sig))
             (rx bol (literal parent-sig) (or eol (not digit))))
            ((not (string-empty-p parent-sig))
             ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
