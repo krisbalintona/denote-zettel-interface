@@ -88,75 +88,68 @@ information.")
 ;;;; Functions
 ;;;;; Signatures
 ;;;;;; Parsing
-(defun denote-interface--signature-elements-head-tail (group)
-  "Take a signature GROUP and return a cons.
-The car of this cons will be the \"front\" portion of the signature,
-while the cdr of this cons will be the remaining portion of the
-signature.
+(defun denote-interface--signature-normalize (sig)
+  "Normalized SIG into a signature whose parts are separated by \"=\".
 
-Right now, a \"signature portion\" is delimited by:
-- The \"=\" character.
-- A change from a number to letter.
-- A change from a letter to number."
-  (let (head tail)
-    (save-match-data
-      ;; HACK 2024-03-04: I hardcode "=" as an additional delimiter of signature
-      ;; portions
-      (if (string-match (if (s-numeric-p (substring group 0 1))
-                            (rx (any alpha)) ; Numbered index head
-                          (rx (any digit)))  ; Alphabet index head
-                        group)
-          (setq head (substring group 0 (match-beginning 0))
-                tail (string-remove-prefix "=" (substring group (match-beginning 0))))
-        (setq head group
-              tail nil)))
-    (cons head tail)))
+This means that every transition from number to letter or letter to
+number warrants the insertion of a \"=\" to delimit it.
 
-(defun denote-interface--signature-decompose-elements-from-group (group)
-  "Take a GROUP and decompose it into its elements.
-Uses `denote-interface--signature-elements-head-tail'."
-  (let* ((parts (denote-interface--signature-elements-head-tail group))
-         (head (car parts))
-         (tail (cdr parts)))
-    (if tail
-        (flatten-list
-         (list head
-               (denote-interface--signature-decompose-elements-from-group tail)))
-      group)))
+Code supplied by Protesilaos Stavrou in
+https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
+  (replace-regexp-in-string
+   "\\([a-zA-Z]+?\\)\\([0-9]\\)" "\\1=\\2"
+   (replace-regexp-in-string
+    "\\([0-9]+?\\)\\([a-zA-Z]\\)" "\\1=\\2"
+    (or sig ""))))                      ; Consider when there is no signature
 
-(defun denote-interface--signature-decompose-into-groups (sig)
-  "Decompose SIG into groups."
-  (when sig
-    (if (string-empty-p sig)
-        nil
-      (string-split sig "="))))
+;; TODO 2024-09-07: Perhaps have the "standardized format" be a customizable
+;; variable? I would have to review all of the code because I started with the
+;; assumption that my format would have to be adhered to, but with Protesilaos's
+;; versatile way splitting of signatures, it might be possible to support
+;; multiple signature formats.
+(defun denote-interface--signature-unnormalize (sig)
+  "Convert a normalized SIG to our standardized format.
+A normalized signature's components are separated by \"=\". However, our
+standardized format only separates the first two components with a
+\"=\"."
+  (save-match-data
+    (if (string-match "=" sig)
+        (concat (substring sig 0 (match-end 0))
+                (replace-regexp-in-string "=" "" sig nil nil nil (match-end 0)))
+      sig)))                            ; For top-level signatures
 
-;;;;;; Text property
-(defun denote-interface--group-text-property (text sig)
-  "Add the `denote-interface-sig' text property to TEXT.
-Its value will be SIG. Call this function for its side effects."
-  (add-text-properties 0
-                       (length text)
-                       (list 'denote-interface-sig (if sig
-                                                       (car (denote-interface--signature-decompose-into-groups sig))
-                                                     "No signature"))
-                       text))
+(defun denote-interface--signature-split (sig)
+  "Split SIG into Luhmann-style parts.
+Returns a list of strings wherein each string is a part as described by
+the docstring of `denote-interface--signature-normalize'."
+  (string-split (denote-interface--signature-normalize sig) "=" t))
+
+(defun denote-interface--signature-padded-parts (sig)
+  "Add padded spaces for all parts of SIG.
+For example, \"3=1b23d\" becomes \"    3=    1=    b=   23=    d\".
+ This is useful for operations such as
+`denote-interface--signature-lessp' which string comparators.
+
+Modified code from Protesilaos Stavrou in
+https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/."
+  (combine-and-quote-strings
+   (mapcar (lambda (x)
+             (string-pad x 5 32 t))
+           (denote-interface--signature-split sig))
+   "="))
 
 ;;;;;; Calculating signatures based on relation
-(defun denote-interface--first-available-child-signature (sig)
+(defun denote-interface--first-child-signature (sig)
   "Return the first child signature of SIG.
 For example, when SIG is \"13b3c,\" the returned signature is \"13b3c1.\""
   (concat sig (if (s-numeric-p (substring sig (1- (length sig)))) "a" "1")))
 
-(defun denote-interface--first-available-sibling-signature (sig)
-  "Return the next signature of SIG.
-The following signature for \"a\" is \"b\", for \"9\" is \"10\", for
-\"z\" is \"A\", and for \"Z\" \"aa\"."
-  (let* ((groups (denote-interface--signature-decompose-into-groups sig))
-         (parts (denote-interface--signature-elements-head-tail (car (last groups))))
+(defun denote-interface--next-sibling-signature (sig)
+  "Return the next sibling signature of SIG.
+For example, the next sibling signature for \"a\" is \"b\", for \"9\" is
+\"10\", for \"z\" is \"A\", and for \"Z\" \"aa\"."
+  (let* ((parts (denote-interface--signature-split sig))
          tail char next)
-    (while (cdr parts)                  ; Get final portion of signature
-      (setq parts (denote-interface--signature-elements-head-tail (cdr parts))))
     (setq tail (car parts)
           char (string-to-char tail)
           next (cond ((s-numeric-p tail) ; A number
@@ -192,9 +185,9 @@ used as the directory."
            (file-relative-name (or dir default-directory) denote-directory)))
          (next-sig (pcase relation
                      ("child"
-                      (denote-interface--first-available-child-signature sig))
+                      (denote-interface--first-child-signature sig))
                      ("sibling"
-                      (denote-interface--first-available-sibling-signature sig))
+                      (denote-interface--next-sibling-signature sig))
                      ("top-level"
                       (let ((top-level-index 1))
                         (while (denote-directory-files
@@ -207,7 +200,7 @@ used as the directory."
     (while (member next-sig
                    (cl-loop for f in (denote-directory-files dir)
                             collect (denote-retrieve-filename-signature f)))
-      (setq next-sig (denote-interface--first-available-sibling-signature next-sig)))
+      (setq next-sig (denote-interface--next-sibling-signature next-sig)))
     next-sig))
 
 ;;;;;; Propertize
@@ -215,12 +208,8 @@ used as the directory."
   "Return propertized SIG for hierarchical visibility."
   (or (and (not sig) "")
       (cdr (assoc-string sig denote-interface--signature-propertize-cache))
-      (let* ((groups (denote-interface--signature-decompose-into-groups sig))
-             (decomposed
-              (flatten-list
-               (cl-loop for group in groups
-                        collect (denote-interface--signature-decompose-elements-from-group group))))
-             (level (1- (length decomposed)))
+      (let* ((parts (denote-interface--signature-split sig))
+             (level (1- (length parts)))
              (face
               (cond
                ((string= sig denote-interface-unsorted-signature)
@@ -284,7 +273,7 @@ following rule derived from the file naming scheme:
             'denote-faces-title)
            ;; When PATH is a "indicator note" (i.e. a note strictly for
            ;; indicator subdivisions among the numbered indexes)
-           ((and sig (not (cdr (denote-interface--signature-decompose-into-groups sig))))
+           ((and sig (not (cdr (denote-interface--signature-split sig))))
             'denote-faces-signature)
            ;; Otherwise
            (t 'denote-faces-title))))
@@ -331,96 +320,20 @@ ID is the ID of the `tabulated-list' entry."
        ,(denote-interface--file-keywords-propertize path)])))
 
 ;;;;; Sorters
-(defun denote-interface--signature-group-lessp (group1 group2)
-  "Compare the ordering of two groups.
-Returns t if GROUP1 should be sorted before GROUP2, nil otherwise."
-  (when (and group1
-             group2
-             (or (s-contains-p "=" group1) (s-contains-p "=" group2)))
-    (error "[denote-interface--signature-group-lessp] Does not accept strings with \"=\""))
-  (if (and group1 group2)
-      (let* ((elements1 (denote-interface--signature-elements-head-tail group1))
-             (elements2 (denote-interface--signature-elements-head-tail group2))
-             (head1 (car elements1))
-             (head2 (car elements2))
-             (tail1 (cdr elements1))
-             (tail2 (cdr elements2))
-             ;; HACK 2024-03-03: Right now, this treats uppercase and lowercase
-             ;; as the same, as well as ignores the difference between, e.g.,
-             ;; "a" and "aa"
-             (index1 (string-to-number head1 16))
-             (index2 (string-to-number head2 16)))
-        (cond
-         ;; Group1 is earlier in order than group2
-         ((< index1 index2) t)
-         ;; Group2 is later than group2
-         ((> index1 index2) nil)
-         ;; Group1 has no tail while group2 has a tail, so it's later than
-         ;; group2
-         ((and (not tail1) tail2) t)
-         ;; Group1 has a tail while group2 has no tail, so it's earlier than
-         ;; group2
-         ((and tail1 (not tail2)) nil)
-         ;; Neither group2 nor group2 have a tail, and their indexes must be
-         ;; equal, so they must have identical signatures. So do something with
-         ;; it now. (Returning nil seems to put the oldest earlier, so we do
-         ;; that.)
-         ((and (not tail1) (not tail2)) nil)
-         ;; Their indices are equal, and they still have a tail, so process
-         ;; those tails next
-         ((= index1 index2)
-          (denote-interface--signature-group-lessp tail1 tail2))))
-    ;; When one or both of group1 and group2 are not supplied
-    (cond
-     ;; If neither are supplied, then use `string-collate-lessp'
-     ((not (or group1 group2))
-      (string-collate-lessp group1 group2))
-     ;; If group1 is present but not group2, then return true so that group1 can
-     ;; be earlier in the list
-     ((and group1 (not group2))
-      t)
-     ;; If group2 is present but not group1, then return nil to put group2
-     ;; earlier
-     ((and (not group1) group2)
-      nil))))
-
 (defun denote-interface--signature-lessp (sig1 sig2)
   "Compare two strings based on my signature sorting rules.
-Returns t if SIG1 should be sorted before SIG2, nil otherwise.
+Returns t if SIG1 should be sorted before SIG2, nil otherwise. Uses
+`string<' to compare strings.
 
-This function splits SIG1 and SIG2 into indexical groups with
-`denote-interface--signature-decompose-into-groups' and compares the first
-group of each. If SIG1 is not definitively before SIG2, then recursively
-call this function on the remaining portion of the signature.
-
-For faster computation after first invocation of `denote-interface',
-leverages `denote-interface--signature-sort-cache' as a cache."
-  (if (and (string-empty-p sig1) (string-empty-p sig2))
-      (let ((cache denote-interface--signature-sort-cache))
-        (and (member sig1 cache)
-             (member sig2 cache)
-             (< (cl-position sig1 cache :test #'equal)
-                (cl-position sig2 cache :test #'equal))))
-    (let ((groups1 (denote-interface--signature-decompose-into-groups sig1))
-          (groups2 (denote-interface--signature-decompose-into-groups sig2)))
-      (cond
-       ;; Return t when: if sig1's groups have so far been after sig2's, but
-       ;; sig2 has more groups while sig1 does not, then this means sig2
-       ;; ultimately goes after sig1
-       ((and (not sig1) sig2) t)
-       ;; Return nil when: if all of sig1's groups go after sig2's groups, then
-       ;; sig2 is after sig1
-       ((not (and sig1 sig2)) nil)
-       ;; When the car of groups1 and groups2 are the same, then recursively
-       ;; call this function on the remaining portion of the signature
-       ((string= (car groups1) (car groups2))
-        (let ((remaining-groups1 (string-join (cdr groups1) "="))
-              (remaining-groups2 (string-join (cdr groups2) "=")))
-          (denote-interface--signature-lessp
-           (unless (string-empty-p remaining-groups1) remaining-groups1)
-           (unless (string-empty-p remaining-groups2) remaining-groups2))))
-       (t
-        (denote-interface--signature-group-lessp (pop groups1) (pop groups2)))))))
+Special exception is given to the `denote-interface-unsorted-signature'
+signature. If SIG1 or SIG2 match `denote-interface-unsorted-signature',
+it will be sorted such that `denote-interface-unsorted-signature' is
+always less, which allows those notes to precede all other notes."
+  (cond
+   ((string= denote-interface-unsorted-signature sig1) t)
+   ((string= denote-interface-unsorted-signature sig2) nil)
+   (t (string< (denote-interface--signature-padded-parts sig1)
+               (denote-interface--signature-padded-parts sig2)))))
 
 (defun denote-interface--signature-sorter (a b)
   "Tabulated-list sorter for entries A and B.
@@ -500,6 +413,18 @@ NEW-SIG."
           (denote-retrieve-front-matter-keywords-value path file-type))
          (denote-rename-no-confirm t))  ; Want it automatic
     (denote-rename-file path title keywords new-sig)))
+
+(defun denote-interface--group-text-property (text sig)
+  "Set the `denote-interface-sig' text property in TEXT.
+The value the `denote-interface-sig' property will be set to will be the
+leading component of SIG. For example, the leading component for \"3=b\"
+is \"3\". This function only produces side effects."
+  (add-text-properties 0
+                       (length text)
+                       (list 'denote-interface-sig (if sig
+                                                       (car (denote-interface--signature-split sig))
+                                                     "No signature"))
+                       text))
 
 ;;;###autoload
 (defun denote-interface-set-signature-minibuffer (files)
@@ -675,19 +600,19 @@ Uses `tablist' filters."
   (let* ((path (denote-interface--get-entry-path))
          (sig (denote-retrieve-filename-signature path))
          (sig-top-level
-          (string-to-number (car (denote-interface--signature-decompose-into-groups sig))))
+          (string-to-number (car (denote-interface--signature-split sig))))
          (min-top-level
           (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
                    minimize (string-to-number
                              (or (car
-                                  (denote-interface--signature-decompose-into-groups
+                                  (denote-interface--signature-split
                                    (denote-retrieve-filename-signature f)))
                                  ""))))
          (max-top-level
           (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
                    maximize (string-to-number
                              (or (car
-                                  (denote-interface--signature-decompose-into-groups
+                                  (denote-interface--signature-split
                                    (denote-retrieve-filename-signature f)))
                                  ""))))
          (next-top-level (+ N sig-top-level))
