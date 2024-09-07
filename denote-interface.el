@@ -586,17 +586,6 @@ be modified will be set relative to that note. See
 
 ;;;;; Navigation
 ;;;###autoload
-(defun denote-interface-filter-top-level-previous (N)
-  "Filter the buffer to the next index top-level notes.
-Go backward N top-levels.
-
-Uses `tablist' filters."
-  (interactive (list (or (and (numberp current-prefix-arg)
-                              (- current-prefix-arg))
-                         -1)))
-  (denote-interface-filter-top-level-next N))
-
-;;;###autoload
 (defun denote-interface-filter-top-level-next (N)
   "Filter the buffer to the next index top-level notes.
 Go forward N top-levels.
@@ -640,6 +629,57 @@ Uses `tablist' filters."
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
     (tablist-push-regexp-filter "Signature" regexp)))
+
+;;;###autoload
+(defun denote-interface-filter-top-level-previous (N)
+  "Filter the buffer to the next index top-level notes.
+Go backward N top-levels.
+
+Uses `tablist' filters."
+  (interactive (list (or (and (numberp current-prefix-arg)
+                              (- current-prefix-arg))
+                         -1)))
+  (denote-interface-filter-top-level-next N))
+
+;; FIXME 2024-09-07: Deal with the cases of cycling before or after the bounds
+;; of the current level.
+;;;###autoload
+(defun denote-interface-filter-forward (N)
+  "Filter the buffer to the next set of notes of the same level.
+Go forward N levels, defaulting to 1.
+
+Uses `tablist' filters."
+  (interactive (list (or (and (numberp current-prefix-arg)
+                              current-prefix-arg)
+                         1)))
+  (let* ((path (denote-interface--get-entry-path))
+         (sig (denote-retrieve-filename-signature path))
+         (sibling-sig sig)
+         regexp)
+    (dotimes (_ (abs N))
+      (setq sibling-sig
+            (denote-interface--next-sibling-signature sibling-sig (< N 0))))
+    ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+    ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+    ;; fragile, so try to find a more robust alternative
+    (setq regexp (rx bol (literal (replace-regexp-in-string "=" "." sibling-sig))))
+    ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
+    ;; is a previous filter made by this command.
+    (tablist-pop-filter 1)
+    (tablist-push-regexp-filter "Signature" regexp)))
+
+;; FIXME 2024-09-07: Deal with the cases of cycling before or after the bounds
+;; of the current level.
+;;;###autoload
+(defun denote-interface-filter-backward (N)
+  "Filter the buffer to the next set of notes of the same level.
+Go backward N levels, defaulting to 1.
+
+Uses `tablist' filters."
+  (interactive (list (or (and (numberp current-prefix-arg)
+                              (- current-prefix-arg))
+                         -1)))
+  (denote-interface-filter-forward N))
 
 ;;;###autoload
 (defun denote-interface-filter-down ()
@@ -719,8 +759,10 @@ Uses `tablist' filters."
     (define-key km (kbd "r") #'denote-interface-set-signature-list)
     (define-key km (kbd "R") #'denote-interface-set-signature-minibuffer)
     (define-key km (kbd "w") #'denote-interface-store-link)
-    (define-key km (kbd "M-p") #'denote-interface-filter-top-level-previous)
-    (define-key km (kbd "M-n") #'denote-interface-filter-top-level-next)
+    (define-key km (kbd "M-N") #'denote-interface-filter-top-level-next)
+    (define-key km (kbd "M-P") #'denote-interface-filter-top-level-previous)
+    (define-key km (kbd "M-n") #'denote-interface-filter-forward)
+    (define-key km (kbd "M-p") #'denote-interface-filter-backward)
     (define-key km (kbd "M-u") #'denote-interface-filter-up)
     (define-key km (kbd "M-d") #'denote-interface-filter-down)
     km)
