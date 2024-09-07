@@ -753,10 +753,17 @@ Uses `tablist' filters."
             (denote-interface--validate-signature-cycling
              (denote-interface--next-sibling-signature sibling-sig (< N 0))
              (< N 0))))
-    ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-    ;; `denote-interface--path-to-entry' I do the reverse. This is quite
-    ;; fragile, so try to find a more robust alternative
-    (setq regexp (rx bol (literal (replace-regexp-in-string "=" "." sibling-sig))))
+    ;; If there are only numbers in the final sibling-sig, then that means it is
+    ;; an indexical (e.g. "1" or "15" as opposed to "1=1", etc.). In those
+    ;; cases, to avoid too broad a regexp (e.g. "^2"), we need to apply a
+    ;; special regexp.
+    (setq regexp
+          (if (string-match-p "\\`[0-9]+\\'" sibling-sig)
+              (rx bol (literal sibling-sig) (or eol (not digit)))
+            ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
+            ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+            ;; fragile, so try to find a more robust alternative
+            (rx bol (literal (replace-regexp-in-string "=" "." sibling-sig)))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
