@@ -395,7 +395,7 @@ Note that this function needs to be performant, otherwise
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-starting-filter)))
+                           (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
@@ -642,6 +642,41 @@ be modified will be set relative to that note. See
       (use-local-map keymap))))
 
 ;;;;; Navigation
+(defun denote-interface--validate-signature-cycling (sig &optional backward)
+  "Ensure that SIG cycles if such a file does not exist.
+If a file with SIG does not exist (given the value of
+`denote-interface-starting-filter'), then this function will return the
+next signature of an existing file according to BACKWARD. That is, in
+the cases that SIG does not have an existing note, if BACKWARD is nil
+then the lowest signature will be returned, but if BACKWARD is non-nil
+then the highest signature will be returned."
+  (if (denote-directory-files
+       (rx (regexp denote-interface-starting-filter) "==" (literal sig)))
+      sig
+    (let* ((parts (denote-interface--signature-split sig))
+           (all-but-last-part (butlast (denote-interface--signature-split sig)))
+           (last-part (car (last parts)))
+           (last-part-num-p (string-match-p "^[0-9]+$" last-part)))
+      (if backward
+          (car
+           (last
+            (cl-remove-if-not
+             (lambda (s)
+               (= (length parts) (length (denote-interface--signature-split s))))
+             (cl-sort
+              (mapcar
+               (lambda (f) (denote-retrieve-filename-signature f))
+               (denote-directory-files
+                (rx (regexp denote-interface-starting-filter)
+                    "=="
+                    (literal (denote-interface--parent-signature sig)))))
+              'denote-interface--signature-lessp))))
+        (denote-interface--signature-unnormalize
+         (string-join
+          (append all-but-last-part
+                  (list (if last-part-num-p "1" "a")))
+          "="))))))
+
 ;;;###autoload
 (defun denote-interface-filter-top-level-next (N)
   "Filter the buffer to the next index top-level notes.
@@ -715,7 +750,9 @@ Uses `tablist' filters."
          regexp)
     (dotimes (_ (abs N))
       (setq sibling-sig
-            (denote-interface--next-sibling-signature sibling-sig (< N 0))))
+            (denote-interface--validate-signature-cycling
+             (denote-interface--next-sibling-signature sibling-sig (< N 0))
+             (< N 0))))
     ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
     ;; `denote-interface--path-to-entry' I do the reverse. This is quite
     ;; fragile, so try to find a more robust alternative
@@ -751,7 +788,7 @@ Uses `tablist' filters."
             (concat sig "=1"))) ; Don't use "." yet since it breaks the following regexp search
          (regexp
           (if (denote-directory-files
-               (rx (regexp denote-interface-starting-filter) (literal child-sig)))
+               (rx (regexp denote-interface-starting-filter) "==" (literal child-sig)))
               ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
               ;; `denote-interface--path-to-entry' I do the reverse. This is
               ;; quite fragile, so try to find a more robust alternative
