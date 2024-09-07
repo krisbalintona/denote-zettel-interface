@@ -150,7 +150,7 @@ For example, the next sibling signature for \"a\" is \"b\", for \"9\" is
 \"10\", for \"z\" is \"A\", and for \"Z\" \"aa\"."
   (let* ((parts (denote-interface--signature-split sig))
          tail char next)
-    (setq tail (car parts)
+    (setq tail (car (last parts))
           char (string-to-char tail)
           next (cond ((s-numeric-p tail) ; A number
                       (number-to-string
