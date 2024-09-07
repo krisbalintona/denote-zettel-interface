@@ -698,7 +698,7 @@ Uses `tablist' filters."
          (regexp
           (if (= next-top-level (string-to-number denote-interface-unsorted-signature))
               (rx bol (literal denote-interface-unsorted-signature))
-            (rx bol (literal (number-to-string next-top-level)) (or (literal ".") eol)))))
+            (rx bol (literal (number-to-string next-top-level)) (zero-or-one (literal "."))))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
