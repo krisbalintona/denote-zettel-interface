@@ -672,18 +672,20 @@ Uses `tablist' filters."
          (sig (denote-retrieve-filename-signature path))
          (sig-top-level
           (string-to-number (car (denote-interface--signature-decompose-into-groups sig))))
-         (min-top-level (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                                 minimize (string-to-number
-                                           (or (car
-                                                (denote-interface--signature-decompose-into-groups
-                                                 (denote-retrieve-filename-signature f)))
-                                               ""))))
-         (max-top-level (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                                 maximize (string-to-number
-                                           (or (car
-                                                (denote-interface--signature-decompose-into-groups
-                                                 (denote-retrieve-filename-signature f)))
-                                               ""))))
+         (min-top-level
+          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                   minimize (string-to-number
+                             (or (car
+                                  (denote-interface--signature-decompose-into-groups
+                                   (denote-retrieve-filename-signature f)))
+                                 ""))))
+         (max-top-level
+          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
+                   maximize (string-to-number
+                             (or (car
+                                  (denote-interface--signature-decompose-into-groups
+                                   (denote-retrieve-filename-signature f)))
+                                 ""))))
          (next-top-level (+ N sig-top-level))
          (next-top-level
           (cond
