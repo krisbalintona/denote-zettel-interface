@@ -368,10 +368,10 @@ Note that this function needs to be performant, otherwise
     "r" #'denote-interface-set-signature-list
     "R" #'denote-interface-set-signature-minibuffer
     "w" #'denote-interface-store-link
-    "M-N" #'denote-interface-filter-top-level-next
-    "M-P" #'denote-interface-filter-top-level-previous
-    "M-n" #'denote-interface-filter-forward
-    "M-p" #'denote-interface-filter-backward
+    "M-N" #'denote-interface-filter-forward
+    "M-P" #'denote-interface-filter-backward
+    "M-n" #'denote-interface-filter-top-level-next
+    "M-p" #'denote-interface-filter-top-level-previous
     "M-u" #'denote-interface-filter-up
     "M-d" #'denote-interface-filter-down)
   "Mode map for `denote-interface-mode'.")
@@ -395,7 +395,7 @@ Note that this function needs to be performant, otherwise
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                           (denote-directory-files denote-interface-starting-filter)))
+                      (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
