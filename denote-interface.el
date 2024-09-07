@@ -829,7 +829,7 @@ Uses `tablist' filters."
     (tablist-pop-filter 1)
     (when regexp
       (tablist-push-regexp-filter "Signature" regexp)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (tablist-skip-invisible-entries)
       (goto-char (1+ (point))))))
 
