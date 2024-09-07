@@ -356,6 +356,66 @@ Note that this function needs to be performant, otherwise
           sig2 (replace-regexp-in-string "\\." "=" sig2))
     (denote-interface--signature-lessp sig1 sig2)))
 
+;;;; Major-modes and keymaps
+(defvar denote-interface-mode-map
+  (define-keymap
+    :parent tablist-mode-map
+    "/ d" #'denote-interface-edit-filter
+    "/ D" #'denote-interface-edit-filter-presets
+    "RET" #'denote-interface-goto-note
+    "o" #'denote-interface-goto-note-other-window
+    "C-o" #'denote-interface-display-note ;
+    "r" #'denote-interface-set-signature-list
+    "R" #'denote-interface-set-signature-minibuffer
+    "w" #'denote-interface-store-link
+    "M-N" #'denote-interface-filter-top-level-next
+    "M-P" #'denote-interface-filter-top-level-previous
+    "M-n" #'denote-interface-filter-forward
+    "M-p" #'denote-interface-filter-backward
+    "M-u" #'denote-interface-filter-up
+    "M-d" #'denote-interface-filter-down)
+  "Mode map for `denote-interface-mode'.")
+
+(define-derived-mode denote-interface-mode tablist-mode "Denote Interface"
+  "Major mode for interfacing with Denote files."
+  :interactive nil
+  :group 'denote-interface
+  :after-hook (set (make-local-variable 'mode-line-misc-info)
+                   (append
+                    (list
+                     (list 'denote-interface-starting-filter
+                           '(:eval (format " [%s]" denote-interface-starting-filter))))))
+  (unless (and denote-interface--id-to-path-cache
+               denote-interface--signature-sort-cache
+               denote-interface--signature-propertize-cache)
+    (denote-interface--generate-caches))
+  (setq tabulated-list-format
+        `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
+          ("Title" ,denote-interface-title-column-width t)
+          ("Keywords" ,denote-interface-title-column-width nil)]
+        tabulated-list-entries
+        (lambda () (mapcar #'denote-interface--path-to-entry
+                      (denote-directory-files denote-interface-starting-filter)))
+        tabulated-list-sort-key '("Signature" . nil))
+  (use-local-map denote-interface-mode-map)
+  (tabulated-list-init-header)
+  (tabulated-list-print))
+
+(defun denote-interface-list (name)
+  "Display list of Denote files in variable `denote-directory'.
+If NAME is supplied, that will be the name of the buffer."
+  (interactive (list nil))
+  (let ((buf-name (or name
+                      (format "*Denote notes in %s*"
+                              (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer)))))))
+    ;; TODO 2024-03-28: Haven't figured out how to adhere to the current
+    ;; denote-silo convention of setting `denote-directory' in .dir-locals
+    (unless (get-buffer buf-name)
+      (with-current-buffer (get-buffer-create buf-name)
+        (setq buffer-file-coding-system 'utf-8)
+        (denote-interface-mode)))
+    (display-buffer buf-name)))
+
 ;;;; Commands
 ;;;;; Filtering
 ;;;###autoload
@@ -744,67 +804,6 @@ Uses `tablist' filters."
                 (plist-get org-store-link-plist :description))
           org-stored-links)
     (message "Stored %s!" (file-relative-name file denote-directory))))
-
-;;;; Major-modes and keymaps
-(defvar denote-interface-mode-map
-  (let ((km (make-sparse-keymap)))
-    (define-key km (kbd "/d") #'denote-interface-edit-filter-presets)
-    (define-key km (kbd "/D") #'denote-interface-edit-filter)
-    (define-key km (kbd "RET") #'denote-interface-goto-note)
-    (define-key km (kbd "o") #'denote-interface-goto-note-other-window)
-    (define-key km (kbd "C-o") #'denote-interface-display-note)
-    (define-key km (kbd "r") #'denote-interface-set-signature-list)
-    (define-key km (kbd "R") #'denote-interface-set-signature-minibuffer)
-    (define-key km (kbd "w") #'denote-interface-store-link)
-    (define-key km (kbd "M-N") #'denote-interface-filter-top-level-next)
-    (define-key km (kbd "M-P") #'denote-interface-filter-top-level-previous)
-    (define-key km (kbd "M-n") #'denote-interface-filter-forward)
-    (define-key km (kbd "M-p") #'denote-interface-filter-backward)
-    (define-key km (kbd "M-u") #'denote-interface-filter-up)
-    (define-key km (kbd "M-d") #'denote-interface-filter-down)
-    km)
-  "Mode map for `denote-interface-mode'.")
-(set-keymap-parent denote-interface-mode-map tablist-mode-map)
-
-(define-derived-mode denote-interface-mode tablist-mode "Denote Interface"
-  "Major mode for interfacing with Denote files."
-  :interactive nil
-  :group 'denote-interface
-  :after-hook (set (make-local-variable 'mode-line-misc-info)
-                   (append
-                    (list
-                     (list 'denote-interface-starting-filter
-                           '(:eval (format " [%s]" denote-interface-starting-filter))))))
-  (unless (and denote-interface--id-to-path-cache
-               denote-interface--signature-sort-cache
-               denote-interface--signature-propertize-cache)
-    (denote-interface--generate-caches))
-  (setq tabulated-list-format
-        `[("Signature" ,denote-interface-signature-column-width denote-interface--signature-sorter)
-          ("Title" ,denote-interface-title-column-width t)
-          ("Keywords" ,denote-interface-title-column-width nil)]
-        tabulated-list-entries
-        (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-starting-filter)))
-        tabulated-list-sort-key '("Signature" . nil))
-  (use-local-map denote-interface-mode-map)
-  (tabulated-list-init-header)
-  (tabulated-list-print))
-
-(defun denote-interface-list (name)
-  "Display list of Denote files in variable `denote-directory'.
-If NAME is supplied, that will be the name of the buffer."
-  (interactive (list nil))
-  (let ((buf-name (or name
-                      (format "*Denote notes in %s*"
-                              (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer)))))))
-    ;; TODO 2024-03-28: Haven't figured out how to adhere to the current
-    ;; denote-silo convention of setting `denote-directory' in .dir-locals
-    (unless (get-buffer buf-name)
-      (with-current-buffer (get-buffer-create buf-name)
-        (setq buffer-file-coding-system 'utf-8)
-        (denote-interface-mode)))
-    (display-buffer buf-name)))
 
 ;;; [End]
 (provide 'denote-interface)
