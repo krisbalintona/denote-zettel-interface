@@ -418,8 +418,7 @@ NEW-SIG."
                          initial-sig)
                        "Choose new signature")))
          (keywords
-          (denote-retrieve-front-matter-keywords-value path file-type))
-         (denote-rename-no-confirm t))  ; Want it automatic
+          (denote-retrieve-front-matter-keywords-value path file-type)))
     (denote-rename-file path title keywords new-sig)))
 
 (defun denote-interface--group-text-property (text sig)
@@ -508,8 +507,7 @@ the :omit-current non-nil. Otherwise,when called interactively in
          (new-sig (denote-interface--determine-new-signature
                    (denote-retrieve-filename-signature selection)
                    note-relation
-                   selection))
-         (denote-rename-no-confirm t))
+                   selection)))
     (denote-interface-set-signature file-at-point new-sig)))
 
 ;;;###autoload
@@ -562,8 +560,7 @@ be modified will be set relative to that note. See
                     (new-sig (denote-interface--determine-new-signature
                               (denote-retrieve-filename-signature selection)
                               note-relation
-                              selection))
-                    (denote-rename-no-confirm t)) ; Want it without confirmation
+                              selection)))
                (denote-interface-set-signature ,file-at-point new-sig)
                (kill-buffer ,buf-name))))
          (confirm-quit-func
