@@ -76,6 +76,9 @@
 (defvar denote-interface--signature-propertize-cache nil
   "Signature cache for `denote-interface--signature-propertize'.")
 
+;; REVIEW 2024-09-08: Reevaluate whether this is needed or not with our new
+;; implementation of `denote-interface--signature-lessp'. I anticipate the
+;; current implementation to be performant enough.
 (defvar denote-interface--signature-sort-cache nil
   "Signature cache for sorting via `denote-interface--signature-lessp'.")
 
