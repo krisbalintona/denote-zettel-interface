@@ -739,8 +739,6 @@ Uses `tablist' filters."
                          -1)))
   (denote-interface-filter-top-level-next N))
 
-;; FIXME 2024-09-07: Deal with the cases of cycling before or after the bounds
-;; of the current level.
 ;;;###autoload
 (defun denote-interface-filter-forward (N)
   "Filter the buffer to the next set of notes of the same level.
@@ -775,8 +773,6 @@ Uses `tablist' filters."
     (tablist-pop-filter 1)
     (tablist-push-regexp-filter "Signature" regexp)))
 
-;; FIXME 2024-09-07: Deal with the cases of cycling before or after the bounds
-;; of the current level.
 ;;;###autoload
 (defun denote-interface-filter-backward (N)
   "Filter the buffer to the next set of notes of the same level.
