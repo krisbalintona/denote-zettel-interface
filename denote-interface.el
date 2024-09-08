@@ -337,11 +337,15 @@ Special exception is given to the `denote-interface-unsorted-signature'
 signature. If SIG1 or SIG2 match `denote-interface-unsorted-signature',
 it will be sorted such that `denote-interface-unsorted-signature' is
 always less, which allows those notes to precede all other notes."
-  (cond
-   ((string= denote-interface-unsorted-signature sig1) t)
-   ((string= denote-interface-unsorted-signature sig2) nil)
-   (t (string< (denote-interface--signature-padded-parts sig1)
-               (denote-interface--signature-padded-parts sig2)))))
+  (let ((cache denote-interface--signature-sort-cache))
+    (cond
+     ((string= denote-interface-unsorted-signature sig1) t)
+     ((string= denote-interface-unsorted-signature sig2) nil)
+     ((and (member sig1 cache) (member sig2 cache))
+      (< (cl-position sig1 cache :test #'equal)
+         (cl-position sig2 cache :test #'equal)))
+     (t (string< (denote-interface--signature-padded-parts sig1)
+                 (denote-interface--signature-padded-parts sig2))))))
 
 (defun denote-interface--signature-sorter (a b)
   "Tabulated-list sorter for entries A and B.
