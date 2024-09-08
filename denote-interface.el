@@ -357,24 +357,23 @@ Note that this function needs to be performant, otherwise
     (denote-interface--signature-lessp sig1 sig2)))
 
 ;;;; Major-modes and keymaps
-(defvar denote-interface-mode-map
-  (define-keymap
-    :parent tablist-mode-map
-    "/ d" #'denote-interface-edit-filter
-    "/ D" #'denote-interface-edit-filter-presets
-    "RET" #'denote-interface-goto-note
-    "o" #'denote-interface-goto-note-other-window
-    "C-o" #'denote-interface-display-note ;
-    "r" #'denote-interface-set-signature-list
-    "R" #'denote-interface-set-signature-minibuffer
-    "w" #'denote-interface-store-link
-    "M-N" #'denote-interface-filter-forward
-    "M-P" #'denote-interface-filter-backward
-    "M-n" #'denote-interface-filter-top-level-next
-    "M-p" #'denote-interface-filter-top-level-previous
-    "M-u" #'denote-interface-filter-up
-    "M-d" #'denote-interface-filter-down)
-  "Mode map for `denote-interface-mode'.")
+(defvar-keymap denote-interface-mode-map
+  :doc "Mode map for `denote-interface-mode'."
+  :parent tablist-mode-map
+  "/ d" #'denote-interface-edit-filter
+  "/ D" #'denote-interface-edit-filter-presets
+  "RET" #'denote-interface-goto-note
+  "o" #'denote-interface-goto-note-other-window
+  "C-o" #'denote-interface-display-note ;
+  "r" #'denote-interface-set-signature-list
+  "R" #'denote-interface-set-signature-minibuffer
+  "w" #'denote-interface-store-link
+  "M-N" #'denote-interface-filter-forward
+  "M-P" #'denote-interface-filter-backward
+  "M-n" #'denote-interface-filter-top-level-next
+  "M-p" #'denote-interface-filter-top-level-previous
+  "M-u" #'denote-interface-filter-up
+  "M-d" #'denote-interface-filter-down)
 
 (define-derived-mode denote-interface-mode tablist-mode "Denote Interface"
   "Major mode for interfacing with Denote files."
