@@ -692,24 +692,20 @@ Uses `tablist' filters."
   (interactive (list (or (and (numberp current-prefix-arg)
                               current-prefix-arg)
                          1)))
-  (let* ((path (denote-interface--get-entry-path))
+  (let* ((files (denote-directory-files denote-interface-starting-filter))
+         (signature-heads (mapcar (lambda (f)
+                                    (car
+                                     (denote-interface--signature-split
+                                      (denote-retrieve-filename-signature f))))
+                                  files))
+         (min-top-level
+          (cl-loop for s in signature-heads minimize (string-to-number (or s ""))))
+         (max-top-level
+          (cl-loop for s in signature-heads maximize (string-to-number (or s ""))))
+         (path (denote-interface--get-entry-path))
          (sig (denote-retrieve-filename-signature path))
          (sig-top-level
           (string-to-number (car (denote-interface--signature-split sig))))
-         (min-top-level
-          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                   minimize (string-to-number
-                             (or (car
-                                  (denote-interface--signature-split
-                                   (denote-retrieve-filename-signature f)))
-                                 ""))))
-         (max-top-level
-          (cl-loop for f in (denote-directory-files denote-interface-starting-filter)
-                   maximize (string-to-number
-                             (or (car
-                                  (denote-interface--signature-split
-                                   (denote-retrieve-filename-signature f)))
-                                 ""))))
          (next-top-level (+ N sig-top-level))
          (next-top-level
           (cond
