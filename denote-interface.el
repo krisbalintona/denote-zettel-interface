@@ -484,8 +484,9 @@ NEW-SIG."
                          initial-sig)
                        "Choose new signature")))
          (keywords
-          (denote-retrieve-front-matter-keywords-value path file-type)))
-    (denote-rename-file path title keywords new-sig)))
+          (denote-retrieve-front-matter-keywords-value path file-type))
+         (date (denote-retrieve-filename-identifier path)))
+    (denote-rename-file path title keywords new-sig date)))
 
 (defun denote-interface--group-text-property (text sig)
   "Set the `denote-interface-sig' text property in TEXT.
