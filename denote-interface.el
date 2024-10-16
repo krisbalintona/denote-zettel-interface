@@ -407,13 +407,17 @@ Note that this function needs to be performant, otherwise
   (tabulated-list-init-header)
   (tabulated-list-print))
 
-(defun denote-interface-list (name)
+(defun denote-interface-list (&optional name)
   "Display list of Denote files in variable `denote-directory'.
 If NAME is supplied, that will be the name of the buffer."
-  (interactive (list nil))
-  (let ((buf-name (or name
-                      (format "*Denote notes in %s*"
-                              (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer)))))))
+  (interactive nil)
+  (let ((buf-name (cond
+                   ((stringp name) name)
+                   (current-prefix-arg
+                    (format "*Denote notes: %s*" (read-from-minibuffer "Name for new buffer: ")))
+                   (t
+                    (format "*Denote notes in %s*"
+                            (abbreviate-file-name (buffer-local-value 'denote-directory (current-buffer))))))))
     ;; TODO 2024-03-28: Haven't figured out how to adhere to the current
     ;; denote-silo convention of setting `denote-directory' in .dir-locals
     (unless (get-buffer buf-name)
