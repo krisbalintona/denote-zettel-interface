@@ -288,7 +288,9 @@ following rule derived from the file naming scheme:
             'denote-faces-signature)
            ;; Otherwise
            (t 'denote-faces-title))))
-    (when titlep (propertize title 'face face))))
+    (if titlep
+        (propertize title 'face face)
+      (propertize "(No Title)" 'face 'shadow))))
 
 ;;;;; Keywords
 (defun denote-interface--file-keywords-propertize (path)
