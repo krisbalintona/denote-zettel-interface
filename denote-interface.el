@@ -77,7 +77,7 @@
   "Signature cache for `denote-interface--signature-propertize'.")
 
 ;; REVIEW 2024-09-08: Reevaluate whether this is needed or not with our new
-;; implementation of `denote-interface--signature-lessp'. I anticipate the
+;; implementation of `denote-interface--signature-lessp'.  I anticipate the
 ;; current implementation to be performant enough.
 (defvar denote-interface--signature-sort-cache nil
   "Signature cache for sorting via `denote-interface--signature-lessp'.")
@@ -106,13 +106,13 @@ https://protesilaos.com/codelog/2024-08-01-emacs-denote-luhmann-signature-sort/.
     (or sig ""))))                      ; Consider when there is no signature
 
 ;; TODO 2024-09-07: Perhaps have the "standardized format" be a customizable
-;; variable? I would have to review all of the code because I started with the
+;; variable?  I would have to review all of the code because I started with the
 ;; assumption that my format would have to be adhered to, but with Protesilaos's
 ;; versatile way splitting of signatures, it might be possible to support
 ;; multiple signature formats.
 (defun denote-interface--signature-unnormalize (sig)
   "Convert a normalized SIG to our standardized format.
-A normalized signature's components are separated by \"=\". However, our
+A normalized signature's components are separated by \"=\".  However, our
 standardized format only separates the first two components with a
 \"=\"."
   (save-match-data
@@ -179,16 +179,16 @@ calculated instead."
 (defun denote-interface--determine-new-signature (sig relation &optional dir)
   "Return the next available signature relative to SIG.
 The new signature depends on RELATION, a string in
-`denote-interface--signature-relations'. If RELATION is \"child\", then
-return the next signature available for a new child note. If it is
+`denote-interface--signature-relations'.  If RELATION is \"child\", then
+return the next signature available for a new child note.  If it is
 \"sibling\", then the new note will be the next available signature at
-the same hierarchical level as SIG. If it is \"top-level\", then the
-next available top-level signature will be returned. If RELATION is nil,
+the same hierarchical level as SIG.  If it is \"top-level\", then the
+next available top-level signature will be returned.  If RELATION is nil,
 then it defaults to a value of \"child\".
 
 If DIR is provided, check for the existence of signatures in that
-directory rather than the entirety of variable `denote-directory'. DIR
-can also be a file. If it is, the parent directory of that file will be
+directory rather than the entirety of variable `denote-directory'.  DIR
+can also be a file.  If it is, the parent directory of that file will be
 used as the directory."
   (let* ((relation (or (downcase relation) "child"))
          (dir
@@ -242,7 +242,7 @@ used as the directory."
 ;;;;;; Caching
 (defun denote-interface--generate-caches ()
   "Generate caches relevant to signatures.
-Speeds up `denote-interface' expensive operations. Populates the
+Speeds up `denote-interface' expensive operations.  Populates the
 following internal variables:
 - `denote-interface--id-to-path-cache'
 - `denote-interface--signature-propertize-cache'
@@ -319,7 +319,7 @@ ID is the ID of the `tabulated-list' entry."
 (defun denote-interface--path-to-entry (path)
   "Convert PATH to an entry in the form of `tabulated-list-entries'."
   ;; Sometimes PATH will not exist, mostly because the file has been renamed.
-  ;; The following corrects PATH. This method relies on the persistence of the
+  ;; The following corrects PATH.  This method relies on the persistence of the
   ;; identifier; if the identifier of the file has changed, then the function
   ;; will return nil (the file will not be shown in the denote-interface
   ;; buffer).
@@ -335,11 +335,11 @@ ID is the ID of the `tabulated-list' entry."
 ;;;;; Sorters
 (defun denote-interface--signature-lessp (sig1 sig2)
   "Compare two strings based on my signature sorting rules.
-Returns t if SIG1 should be sorted before SIG2, nil otherwise. Uses
+Returns t if SIG1 should be sorted before SIG2, nil otherwise.  Uses
 `string<' to compare strings.
 
 Special exception is given to the `denote-interface-unsorted-signature'
-signature. If SIG1 or SIG2 match `denote-interface-unsorted-signature',
+signature.  If SIG1 or SIG2 match `denote-interface-unsorted-signature',
 it will be sorted such that `denote-interface-unsorted-signature' is
 always less, which allows those notes to precede all other notes."
   (let ((cache denote-interface--signature-sort-cache))
@@ -359,7 +359,7 @@ Note that this function needs to be performant, otherwise
   (let* ((sig1 (aref (cadr a) 0))
          (sig2 (aref (cadr b) 0)))
     ;; FIXME 2024-03-04: I have to replace "."s with "=" because in
-    ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+    ;; `denote-interface--path-to-entry' I do the reverse.  This is quite
     ;; fragile, so try to find a more robust alternative
     (setq sig1 (replace-regexp-in-string "\\." "=" sig1)
           sig2 (replace-regexp-in-string "\\." "=" sig2))
@@ -403,7 +403,7 @@ Note that this function needs to be performant, otherwise
           ("Keywords" ,denote-interface-title-column-width nil)]
         tabulated-list-entries
         (lambda () (mapcar #'denote-interface--path-to-entry
-                      (denote-directory-files denote-interface-starting-filter)))
+                           (denote-directory-files denote-interface-starting-filter)))
         tabulated-list-sort-key '("Signature" . nil))
   (use-local-map denote-interface-mode-map)
   (tabulated-list-init-header)
@@ -471,7 +471,7 @@ If NAME is supplied, that will be the name of the buffer."
 (defun denote-interface-set-signature (path new-sig)
   "Set the note at point's (in `denote-interface' buffer) signature.
 Can be called interactively from a denote note or a `denote-interface'
-entry. If called non-interactively, set the signature of PATH to
+entry.  If called non-interactively, set the signature of PATH to
 NEW-SIG."
   (interactive (list (cond ((derived-mode-p 'denote-interface-mode)
                             (denote-interface--get-entry-path))
@@ -497,8 +497,8 @@ NEW-SIG."
 (defun denote-interface--group-text-property (text sig)
   "Set the `denote-interface-sig' text property in TEXT.
 The value the `denote-interface-sig' property will be set to will be the
-leading component of SIG. For example, the leading component for \"3=b\"
-is \"3\". This function only produces side effects."
+leading component of SIG.  For example, the leading component for \"3=b\"
+is \"3\".  This function only produces side effects."
   (add-text-properties 0
                        (length text)
                        (list 'denote-interface-sig (if sig
@@ -517,7 +517,7 @@ considered.
 If nil or called interactively, then defaults `denote-directory-files'
 constrained to notes with signatures (i.e. \"==\") and are in the
 current subdirectory (this is my bespoke desired behavior), as well as
-the :omit-current non-nil. Otherwise,when called interactively in
+the :omit-current non-nil.  Otherwise,when called interactively in
 `denote-interface', it will be the value of
 `denote-interface--entries-to-paths'."
   (interactive (list (if (eq major-mode 'denote-interface-mode)
@@ -589,9 +589,9 @@ the :omit-current non-nil. Otherwise,when called interactively in
 Like `denote-interface-set-signature-minibuffer' but uses
 `denote-interface-selection-mode' instead of minibuffer.
 
-FILES are the list of files shown, defaulting to all denote files. When
+FILES are the list of files shown, defaulting to all denote files.  When
 \"RET\" or \"q\" is called on a note, the new signature of the file to
-be modified will be set relative to that note. See
+be modified will be set relative to that note.  See
 `denote-interface--determine-new-signature' for more details."
   (interactive (list (if (eq major-mode 'denote-interface-mode)
                          (progn
@@ -659,7 +659,7 @@ be modified will be set relative to that note. See
   "Ensure that SIG cycles if such a file does not exist.
 If a file with SIG does not exist (given the value of
 `denote-interface-starting-filter'), then this function will return the
-next signature of an existing file according to BACKWARD. That is, in
+next signature of an existing file according to BACKWARD.  That is, in
 the cases that SIG does not have an existing note, if BACKWARD is nil
 then the lowest signature will be returned, but if BACKWARD is non-nil
 then the highest signature will be returned."
@@ -761,14 +761,14 @@ Uses `tablist' filters."
              (denote-interface--next-sibling-signature sibling-sig (< N 0))
              (< N 0))))
     ;; If there are only numbers in the final sibling-sig, then that means it is
-    ;; an indexical (e.g. "1" or "15" as opposed to "1=1", etc.). In those
+    ;; an indexical (e.g. "1" or "15" as opposed to "1=1", etc.).  In those
     ;; cases, to avoid too broad a regexp (e.g. "^2"), we need to apply a
     ;; special regexp.
     (setq regexp
           (if (string-match-p "\\`[0-9]+\\'" sibling-sig)
               (rx bol (literal sibling-sig) (or eol (not digit)))
             ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-            ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+            ;; `denote-interface--path-to-entry' I do the reverse.  This is quite
             ;; fragile, so try to find a more robust alternative
             (rx bol (literal (replace-regexp-in-string "=" "." sibling-sig)))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
@@ -802,7 +802,7 @@ Uses `tablist' filters."
           (if (denote-directory-files
                (rx (regexp denote-interface-starting-filter) "==" (literal child-sig)))
               ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-              ;; `denote-interface--path-to-entry' I do the reverse. This is
+              ;; `denote-interface--path-to-entry' I do the reverse.  This is
               ;; quite fragile, so try to find a more robust alternative
               (rx bol (literal (replace-regexp-in-string "=" "." child-sig)))
             (rx bol (literal (replace-regexp-in-string "=" "." sig))))))
@@ -826,9 +826,9 @@ Uses `tablist' filters."
             (rx bol (literal parent-sig) (or eol (not digit))))
            ((not (string-empty-p parent-sig))
             ;; FIXME 2024-09-07: I have to replace "."s with "=" because in
-            ;; `denote-interface--path-to-entry' I do the reverse. This is quite
+            ;; `denote-interface--path-to-entry' I do the reverse.  This is quite
             ;; fragile, so try to find a more robust alternative
-            (rx bol (literal (replace-regexp-in-string "=" "." parent-sig)))))))
+            (rx bol (literal (replace-regexp-in-string "=" "."  parent-sig)))))))
     ;; OPTIMIZE 2024-03-17: Right now this assumes that the head of the filters
     ;; is a previous filter made by this command.
     (tablist-pop-filter 1)
@@ -847,7 +847,7 @@ Uses `tablist' filters."
               (file-id (denote-retrieve-filename-identifier file))
               (description (denote--link-get-description file))
               (orgp (string= "org" (file-name-extension file))))
-    ;; Populate `org-store-link-plist'. Inspired by `denote-link-ol-store'
+    ;; Populate `org-store-link-plist'.  Inspired by `denote-link-ol-store'
     (org-link-store-props
      :type "denote"
      :description description
