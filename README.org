@@ -1,6 +1,43 @@
 #+title: denote-zettel-interface
 
-This repository is
+This project was initially devised by the author to replicate a [[https://zettelkasten.de/folgezettel/][Zettelkasten workflow implementing Folgezettel]] using [[https://protesilaos.com/emacs/denote][denote.el]]. It is intended to sit atop one's usage of =denote.el=. The only assumption is that [[https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][note signatures]] be used as folgezettel index numberings in subdirectories apart of the user's Zettelkasten[fn:1]
+
+The vision of this package is to represent the folgezettel index in a list format (~tabulated-list-mode~) and be able to navigate the index according to the numbering of notes, filter the shown notes arbitrarily (including by parents and siblings of a folgezettel index numbering), and automatically set the index numbering of a new note by the user's selection of the parent folgezettel note[fn:2].
+
+[fn:1] In fact, users can treat separate subdirectories as different Zettelkastens, each having their own index numbering.
+
+[fn:2] That is, if I have a new note and set its parent to a note whose index is "1=3a", then it will automatically be numbered as "1=3a2" if "1=3a1" is taken.
 
 * Features
-+ 
+
++ List notes in ~tabulated-list-mode~ buffer
++ Implements a basic cache to speed of displaying and sorting-by-index-number of notes
++ Filter by subdirectory
++ Filtering any column by arbitrary string using ~tablist.el~
++ Sorting by folgezettel index numbering
++ Navigation by index numbering
++ Commands to conveniently set index number of note by selecting "parent" folgezettel note
+
+* Index numbering
+
+This project assumes the following folgezettel index numbering schema:
++ Denote [[https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][note signatures]] contain just the index numbering for that note.
++ They are in a format like "1=3a12c1". That is:
+  - The beginning of the index numbering begins with a positive integer.
+  - At any point, a "=" demarcates a new section of the index numbering.[fn:3]
+  - In portions of the index numbering which are not demarcated into sections by "=" are demarcated by alternating between numbers in digits.[fn:4]
++ In a ~denote-zettel-interface-mode~ buffer, the "=" in these index numberings are rendered as periods. So: "1=3a12c1" becomes "1.3a12c1".
+
+[fn:3] So equivalent to "1=3a12c1" is "1=3=a=12=c=1" and "1=3a12c=1" and so on.
+
+[fn:4] So "1=3a12c1" has sections "1", "3", "a", "12", "c", and "1".
+
+* Deprecation notice
+
+The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/.
+
+To those interested, the author has moved to creating a similar package for =org-roam= that is meant to achieve the same purpose of =ndenote-zettel-interface= to an even greater degree: [[https://github.com/krisbalintona/org-roam-folgezettel][krisbalintona/org-roam-folgezettel]].
+
+Consequently, users are encouraged to either:
+1. fork this project and copy its code for their own purposes, or
+2. take inspiration from the functionality herein to further their own Zettelkasten workflow or develop their own project that improves upon those concepts.
