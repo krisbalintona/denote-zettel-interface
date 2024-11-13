@@ -4,6 +4,8 @@ This project was initially devised by the author to replicate a [[https://zettel
 
 The vision of this package is to represent the folgezettel index in a list format (~tabulated-list-mode~) and be able to navigate the index according to the numbering of notes, filter the shown notes arbitrarily (including by parents and siblings of a folgezettel index numbering), and automatically set the index numbering of a new note by the user's selection of the parent folgezettel note[fn:2].
 
+The current iteration of this package is somewhat clunky: bindings could be improved and the UX needs some work in various places. However, I personally used this project as the sole entry-point to my Zettelkasten for months and at the very least /it was enough/.
+
 * Features
 
 + List notes in ~tabulated-list-mode~ buffer
@@ -73,7 +75,7 @@ I initially used [[https://github.com/namilus/denote-menu][denote-menu]] to navi
 
 * Deprecation notice
 
-The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/.
+The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/. I am, however, open to making minor improvements to the existing functionality per the request of interested users.
 
 To those interested, the author has moved to creating a similar package for =org-roam= that is meant to achieve the same purpose of =ndenote-zettel-interface= to an even greater degree: [[https://github.com/krisbalintona/org-roam-folgezettel][krisbalintona/org-roam-folgezettel]].
 
