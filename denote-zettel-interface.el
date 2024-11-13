@@ -373,7 +373,7 @@ Note that this function needs to be performant, otherwise
   "/ D" #'denote-zettel-interface-edit-filter-presets
   "RET" #'denote-zettel-interface-goto-note
   "o" #'denote-zettel-interface-goto-note-other-window
-  "C-o" #'denote-zettel-interface-display-note ;
+  "C-o" #'denote-zettel-interface-display-note
   "r" #'denote-zettel-interface-set-signature-list
   "R" #'denote-zettel-interface-set-signature-minibuffer
   "w" #'denote-zettel-interface-store-link
