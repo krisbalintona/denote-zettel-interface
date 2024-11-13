@@ -14,9 +14,20 @@ The vision of this package is to represent the folgezettel index in a list forma
 + Navigation by index numbering
 + Commands to conveniently set index number of note by selecting "parent" folgezettel note
 
+* Sample workflow
+
+1. Call =M-x denote-zettel-interface-list= to list Denote notes.
+2. Press =/ d= (or ~M-x denote-zettel-interface-edit-filter~) to filter your notes by regexp on denote file names.
+3. Use =M-N, =M-P=, =M-n=, =M-p=, =M-d=, and =M-u= to navigate notes shown by way of their index numbering.
+4. Create a new note.
+5. In that note's buffer, call =M-x denote-zettel-interface-set-signature-list=[fn:3] or =M-x denote-zettel-interface-set-signature-minibuffer=[fn:4] to interactively select a folgezettel parent for that note.
+6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
+
 * Commands
 
 Below are a list of useful commands for those viewing the package for the first time. You can also find these commands and more via ~M-x apropos-command denote-zettel-interface RET~.
++ ~denote-zettel-interface-list~
+  Display list of Denote files in variable ~denote-directory~.
 + ~denote-zettel-interface-display-note~
   Just display the current note in another window.
 + ~denote-zettel-interface-edit-filter~
@@ -52,8 +63,8 @@ This project assumes the following folgezettel index numbering schema:
 + Denote [[https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][note signatures]] contain just the index numbering for that note.
 + They are in a format like "1=3a12c1". That is:
   - The beginning of the index numbering begins with a positive integer.
-  - At any point, a "=" demarcates a new section of the index numbering.[fn:3]
-  - In portions of the index numbering which are not demarcated into sections by "=" are demarcated by alternating between numbers in digits.[fn:4]
+  - At any point, a "=" demarcates a new section of the index numbering.[fn:5]
+  - In portions of the index numbering which are not demarcated into sections by "=" are demarcated by alternating between numbers in digits.[fn:6]
 + In a ~denote-zettel-interface-mode~ buffer, the "=" in these index numberings are rendered as periods. So: "1=3a12c1" becomes "1.3a12c1".
 
 * Deprecation notice
@@ -72,6 +83,10 @@ Consequently, users are encouraged to either:
 
 [fn:2] That is, if I have a new note and set its parent to a note whose index is "1=3a", then it will automatically be numbered as "1=3a2" if "1=3a1" is taken.
 
-[fn:3] So equivalent to "1=3a12c1" is "1=3=a=12=c=1" and "1=3a12c=1" and so on.
+[fn:3] This command produces a special ~denote-zettel-interface-mode~ buffer where =RET= will specially select the note at point as the folgezettel parent.
 
-[fn:4] So "1=3a12c1" has sections "1", "3", "a", "12", "c", and "1".
+[fn:4] This command creates a minibuffer prompt for selecting the folgezettel parent. The minibuffer prompt is grouped by top-level index numbering (i.e. all notes whose numbering begins with "1=..." are grouped together), so users of [[https://github.com/minad/vertico][vertico.el]] can use ~vertico-next-group~ and ~vertico-previous-group~ for quick navigation of the index.
+
+[fn:5] So equivalent to "1=3a12c1" is "1=3=a=12=c=1" and "1=3a12c=1" and so on.
+
+[fn:6] So "1=3a12c1" has sections "1", "3", "a", "12", "c", and "1".
