@@ -18,11 +18,10 @@ The current iteration of this package is somewhat clunky: bindings could be impr
 
 * Installation
 
-Currently, this project is not available in a package repository. As such, users will need to manually download the files (e.g. =git clone https://github.com/krisbalintona/denote-zettel-interface.git=) alongside its dependencies. Currently, these are the only third-party dependencies:
+Currently, this project is not available in a package repository. As such, users will need to manually download the files (e.g. =git clone https://github.com/krisbalintona/denote-zettel-interface.git=) and ensure its dependencies are installed. Currently, these are the only third-party dependencies:
 1. [[https://github.com/protesilaos/denote][Denote.el]]
 2. [[https://github.com/emacsorphanage/tablist][Tablist.el]] (used for filtering =tabulated-list-mode= entries)
-
-Users can either evaluate something like this:
+Users can either evaluate something like this to install:
 #+begin_src emacs-lisp
   (use-package tablist
     :ensure t)
