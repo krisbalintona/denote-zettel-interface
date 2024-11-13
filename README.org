@@ -21,20 +21,18 @@ Below are a list of useful commands for those viewing the package for the first 
   Just display the current note in another window.
 + ~denote-zettel-interface-edit-filter~
   Edit the currently existing filter.
-+ ~denote-zettel-interface-edit-filter-presets~
-  Edit the currently existing filter.
 + ~denote-zettel-interface-filter-backward~
+  Filter the buffer to the next set of notes of the same level.
++ ~denote-zettel-interface-filter-forward~
   Filter the buffer to the next set of notes of the same level.
 + ~denote-zettel-interface-filter-down~
   Filter the buffer to the children of the current note.
-+ ~denote-zettel-interface-filter-forward~
-  Filter the buffer to the next set of notes of the same level.
++ ~denote-zettel-interface-filter-up~
+  Filter the buffer to the parent of the current note and its children.
 + ~denote-zettel-interface-filter-top-level-next~
   Filter the buffer to the next index top-level notes.
 + ~denote-zettel-interface-filter-top-level-previous~
   Filter the buffer to the next index top-level notes.
-+ ~denote-zettel-interface-filter-up~
-  Filter the buffer to the parent of the current note and its children.
 + ~denote-zettel-interface-goto-note~
   Jump to the note corresponding to the entry at point.
 + ~denote-zettel-interface-goto-note-other-window~
