@@ -67,6 +67,10 @@ This project assumes the following folgezettel index numbering schema:
   - In portions of the index numbering which are not demarcated into sections by "=" are demarcated by alternating between numbers in digits.[fn:6]
 + In a ~denote-zettel-interface-mode~ buffer, the "=" in these index numberings are rendered as periods. So: "1=3a12c1" becomes "1.3a12c1".
 
+* Inspiration
+
+I initially used [[https://github.com/namilus/denote-menu][denote-menu]] to navigate my denote notes, but found that if I used folgezettel, I needed a much more specialized package for navigating the index and setting new index numberings. Thus, this project was born.
+
 * Deprecation notice
 
 The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/.
