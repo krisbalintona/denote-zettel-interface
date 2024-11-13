@@ -16,6 +16,28 @@ The current iteration of this package is somewhat clunky: bindings could be impr
 + Navigation by index numbering
 + Commands to conveniently set index number of note by selecting "parent" folgezettel note
 
+* Installation
+
+Currently, this project is not available in a package repository. As such, users will need to manually download the files (e.g. =git clone https://github.com/krisbalintona/denote-zettel-interface.git=) alongside its dependencies. Currently, these are the only third-party dependencies:
+1. [[https://github.com/protesilaos/denote][Denote.el]]
+2. [[https://github.com/emacsorphanage/tablist][Tablist.el]] (used for filtering =tabulated-list-mode= entries)
+
+Users can either evaluate something like this:
+#+begin_src emacs-lisp
+  (use-package tablist
+    :ensure t)
+
+  (use-package denote-zettel-interface
+    :load-path "/home/USER/PATH/TO/LOCAL/REPOSITORY")
+#+end_src
+Or, if using Emacs-30 or newer:
+#+begin_src emacs-lisp
+  (use-package denote-zettel-interface
+    :ensure t
+    :vc ( :url "https://github.com/krisbalintona/denote-zettel-interface.git"
+          :rev :newest))
+#+end_src
+
 * Sample workflow
 
 1. Call =M-x denote-zettel-interface-list= to list Denote notes.
