@@ -46,6 +46,34 @@ Or, if using Emacs-30 or newer:
 5. In that note's buffer, call =M-x denote-zettel-interface-set-signature-list=[fn:3] or =M-x denote-zettel-interface-set-signature-minibuffer=[fn:4] to interactively select a folgezettel parent for that note.
 6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
 
+* Sample configuration
+
+Here is a varianet of the author's use-package configuration:
+#+begin_src emacs-lisp
+  (use-package denote-zettel-interface
+    :after denote
+    :vc ( :url "https://github.com/krisbalintona/denote-zettel-interface.git"
+          :rev :newest)
+    :autoload denote-zettel-interface--signature-lessp
+    :bind (("C-c n m" . denote-zettel-interface-list)
+           ("C-c n r" . denote-zettel-interface-set-signature-list)
+           ("C-c n R" . denote-zettel-interface-set-signature-minibuffer))
+    :custom
+    (denote-zettel-interface-signature-column-width
+     (+ 6 (cl-loop for file in (denote-directory-files)
+                   maximize (length (denote-retrieve-filename-signature file)))))
+    (denote-zettel-interface-title-column-width 120)
+    (denote-zettel-interface-starting-filter-presets
+     ;; I have a "zettels" subdirectory that contains all my "main notes."  I also
+     ;; have a "bib" subdirectory that contains my org files pertaining to books,
+     ;; videos, papers, articles, and so on.
+     '("zettels/[^z-a]*" "bib/[^z-a]*"))
+    (denote-zettel-interface-starting-filter "zettels/[^z-a]*")
+    :init
+    (with-eval-after-load 'denote
+      (setopt denote-sort-signature-comparison-function #'denote-zettel-interface--signature-lessp)))
+#+end_src
+
 * Commands
 
 Below are a list of useful commands for those viewing the package for the first time. You can also find these commands and more via ~M-x apropos-command denote-zettel-interface RET~.
