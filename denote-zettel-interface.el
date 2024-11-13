@@ -502,8 +502,8 @@ is \"3\".  This function only produces side effects."
   (add-text-properties 0
                        (length text)
                        (list 'denote-zettel-interface-sig (if sig
-                                                       (car (denote-zettel-interface--signature-split sig))
-                                                     "No signature"))
+                                                              (car (denote-zettel-interface--signature-split sig))
+                                                            "No signature"))
                        text))
 
 ;;;###autoload
@@ -845,7 +845,7 @@ Uses `tablist' filters."
   (interactive)
   (when-let* ((file (denote-zettel-interface--get-entry-path))
               (file-id (denote-retrieve-filename-identifier file))
-              (description (denote--link-get-description file))
+              (description (denote-get-link-description file))
               (orgp (string= "org" (file-name-extension file))))
     ;; Populate `org-store-link-plist'.  Inspired by `denote-link-ol-store'
     (org-link-store-props
