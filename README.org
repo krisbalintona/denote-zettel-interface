@@ -37,15 +37,6 @@ Or, if using Emacs-30 or newer:
           :rev :newest))
 #+end_src
 
-* Sample workflow
-
-1. Call =M-x denote-zettel-interface-list= to list Denote notes.
-2. Press =/ d= (or ~M-x denote-zettel-interface-edit-filter~) to filter your notes by regexp on denote file names.
-3. Use =M-N, =M-P=, =M-n=, =M-p=, =M-d=, and =M-u= to navigate notes shown by way of their index numbering.
-4. Create a new note.
-5. In that note's buffer, call =M-x denote-zettel-interface-set-signature-list=[fn:3] or =M-x denote-zettel-interface-set-signature-minibuffer=[fn:4] to interactively select a folgezettel parent for that note.
-6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
-
 * Sample configuration
 
 Here is a varianet of the author's use-package configuration:
@@ -73,6 +64,15 @@ Here is a varianet of the author's use-package configuration:
     (with-eval-after-load 'denote
       (setopt denote-sort-signature-comparison-function #'denote-zettel-interface--signature-lessp)))
 #+end_src
+
+* Sample workflow
+
+1. Call =M-x denote-zettel-interface-list= to list Denote notes.
+2. Press =/ d= (or ~M-x denote-zettel-interface-edit-filter~) to filter your notes by regexp on denote file names.
+3. Use =M-N, =M-P=, =M-n=, =M-p=, =M-d=, and =M-u= to navigate notes shown by way of their index numbering.
+4. Create a new note.
+5. In that note's buffer, call =M-x denote-zettel-interface-set-signature-list=[fn:3] or =M-x denote-zettel-interface-set-signature-minibuffer=[fn:4] to interactively select a folgezettel parent for that note.
+6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
 
 * Commands
 
