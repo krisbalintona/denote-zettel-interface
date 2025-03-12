@@ -6,6 +6,8 @@ The vision of this package is to represent the folgezettel index in a list forma
 
 The current iteration of this package is somewhat clunky at places: bindings could be improved and the UX can be improved. However, I personally used this project as the sole entry-point to my Zettelkasten for months and at the very least /it was enough/.
 
+If you have any questions, requests, or curiosities, please create an issue on [[https://github.com/krisbalintona/denote-zettel-interface][the project's GitHub page]] or email the author at [[mailto:krisbalintona@gmail.com][krisbalintona@gmail.com]].
+
 * Features
 
 + List notes in ~tabulated-list-mode~ buffer
