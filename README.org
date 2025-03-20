@@ -10,7 +10,9 @@ The current iteration of this package is somewhat clunky at places: bindings cou
 
 If you have any questions, requests, or curiosities, please create an issue on [[https://github.com/krisbalintona/denote-zettel-interface][the project's GitHub page]] or email the author at [[mailto:krisbalintona@gmail.com][krisbalintona@gmail.com]].
 
-* Features
+* About this package and its author
+
+** Features
 
 + List notes in ~tabulated-list-mode~ buffer
 + Implements a basic cache to speed of displaying and sorting-by-index-number of notes
@@ -19,6 +21,20 @@ If you have any questions, requests, or curiosities, please create an issue on [
 + Sorting by folgezettel index numbering
 + Navigation by index numbering
 + Commands to conveniently set index number of note by selecting "parent" folgezettel note
+
+** Inspiration
+
+I initially used [[https://github.com/namilus/denote-menu][denote-menu]] to navigate my denote notes, but found that if I used folgezettel, I needed a much more specialized package for navigating the index and setting new index numberings. Thus, this project was born.
+
+** Deprecation notice
+
+The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/. I am, however, open to making minor improvements to the existing functionality per the request of interested users.
+
+To those interested, the author has moved to creating a similar package for =org-roam= that is meant to achieve the same purpose of =ndenote-zettel-interface= to an even greater degree: [[https://github.com/krisbalintona/org-roam-folgezettel][krisbalintona/org-roam-folgezettel]].
+
+Consequently, users are encouraged to either:
+1. fork this project and copy its code for their own purposes, or
+2. take inspiration from the functionality herein to further their own Zettelkasten workflow or develop their own project that improves upon those concepts.
 
 * Installation
 
@@ -41,9 +57,11 @@ Or, if using Emacs-30 or newer:
           :rev :newest))
 #+end_src
 
-* Sample configuration
+* Usage
 
-Here is a varianet of the author's use-package configuration:
+** Sample configuration
+
+Here is a variant of the author's use-package configuration:
 #+begin_src emacs-lisp
   (use-package denote-zettel-interface
     :after denote
@@ -69,7 +87,7 @@ Here is a varianet of the author's use-package configuration:
       (setopt denote-sort-signature-comparison-function #'denote-zettel-interface--signature-lessp)))
 #+end_src
 
-* Sample workflow
+** Sample workflow
 
 1. Call =M-x denote-zettel-interface-list= to list Denote notes.
 2. Press =/ d= (or ~M-x denote-zettel-interface-edit-filter~) to filter your notes by regexp on denote file names.
@@ -78,7 +96,7 @@ Here is a varianet of the author's use-package configuration:
 5. In that note's buffer, call =M-x denote-zettel-interface-set-signature-list=[fn:3] or =M-x denote-zettel-interface-set-signature-minibuffer=[fn:4] to interactively select a folgezettel parent for that note.
 6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
 
-* Commands
+** Commands
 
 Below are a list of useful commands for those viewing the package for the first time. You can also find these commands and more via ~M-x apropos-command denote-zettel-interface RET~.
 + ~denote-zettel-interface-list~
@@ -121,20 +139,6 @@ This project assumes the following folgezettel index numbering schema:
   - At any point, a "=" demarcates a new section of the index numbering.[fn:5]
   - In portions of the index numbering which are not demarcated into sections by "=" are demarcated by alternating between numbers in digits.[fn:6]
 + In a ~denote-zettel-interface-mode~ buffer, the "=" in these index numberings are rendered as periods. So: "1=3a12c1" becomes "1.3a12c1".
-
-* Inspiration
-
-I initially used [[https://github.com/namilus/denote-menu][denote-menu]] to navigate my denote notes, but found that if I used folgezettel, I needed a much more specialized package for navigating the index and setting new index numberings. Thus, this project was born.
-
-* Deprecation notice
-
-The author of this project has migrated to =org-roam=. Consequently, this project is /no longer being actively developed/. I am, however, open to making minor improvements to the existing functionality per the request of interested users.
-
-To those interested, the author has moved to creating a similar package for =org-roam= that is meant to achieve the same purpose of =ndenote-zettel-interface= to an even greater degree: [[https://github.com/krisbalintona/org-roam-folgezettel][krisbalintona/org-roam-folgezettel]].
-
-Consequently, users are encouraged to either:
-1. fork this project and copy its code for their own purposes, or
-2. take inspiration from the functionality herein to further their own Zettelkasten workflow or develop their own project that improves upon those concepts.
 
 * Footnotes
 
