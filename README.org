@@ -1,5 +1,7 @@
 #+title: denote-zettel-interface
 
+#  LocalWords:  folgezettel numberings
+
 This project was initially devised by the author to replicate a [[https://zettelkasten.de/folgezettel/][Zettelkasten workflow implementing Folgezettel]] using [[https://protesilaos.com/emacs/denote][denote.el]]. It is intended to sit atop one's usage of =denote.el=. The only assumption is that [[https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][note signatures]] be used as folgezettel index numberings in subdirectories within the user's Zettelkasten[fn:1].
 
 The vision of this package is to represent the folgezettel index in a list format (~tabulated-list-mode~) and be able to navigate the index according to the numbering of notes, filter the shown notes arbitrarily (including by parents and siblings of a folgezettel index numbering), and automatically set the index numbering of a new note by the user's selection of the parent folgezettel note[fn:2]. In a way, this is an attempt at reducing the gap in navigating a digital versus analog/physical Zettelkasten.
