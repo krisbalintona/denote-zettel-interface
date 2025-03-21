@@ -4,7 +4,7 @@
 
 ;; Author: Kristoffer Balintona <krisbalintona@gmail.com>
 ;; Homepage: https://github.com/krisbalintona/denote-zettel-interface
-;; Version: 0.2.0
+;; Version: 0.2.2
 ;; Package-Requires: ((emacs "29.1") (org "9.3"))
 ;; Keywords: tools, extensions, convenience
 
