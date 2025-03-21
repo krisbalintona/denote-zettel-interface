@@ -1,3 +1,4 @@
+# -*- eval: (add-hook 'before-save-hook 'org-make-toc); -*-
 #+title: denote-zettel-interface
 
 #  LocalWords:  folgezettel numberings PRs
@@ -10,9 +11,34 @@ The current iteration of this package is somewhat clunky at places: bindings cou
 
 If you have any questions, requests, or curiosities, please create an issue on [[https://github.com/krisbalintona/denote-zettel-interface][the project's GitHub page]] or email the author at [[mailto:krisbalintona@gmail.com][krisbalintona@gmail.com]].
 
+* Table of Contents
+:PROPERTIES:
+:TOC:      :include all :force (nothing) :ignore (this) :local (nothing)
+:END:
+
+:CONTENTS:
+- [[#about-this-package-and-its-author][About this package and its author]]
+  - [[#features][Features]]
+  - [[#motivation][Motivation]]
+  - [[#status-of-this-project-future-development-and-org-roam-folgezettel][Status of this project, future development, and org-roam-folgezettel]]
+- [[#installation][Installation]]
+- [[#usage][Usage]]
+  - [[#sample-configuration][Sample configuration]]
+  - [[#sample-workflow][Sample workflow]]
+  - [[#commands][Commands]]
+- [[#index-numbering][Index numbering]]
+- [[#footnotes][Footnotes]]
+:END:
+
 * About this package and its author
+:PROPERTIES:
+:CUSTOM_ID: about-this-package-and-its-author
+:END:
 
 ** Features
+:PROPERTIES:
+:CUSTOM_ID: features
+:END:
 
 + List notes in ~tabulated-list-mode~ buffer
 + Implements a basic cache to speed of displaying and sorting-by-index-number of notes
@@ -23,10 +49,16 @@ If you have any questions, requests, or curiosities, please create an issue on [
 + Commands to conveniently set index number of note by selecting "parent" folgezettel note
 
 ** Motivation
+:PROPERTIES:
+:CUSTOM_ID: motivation
+:END:
 
 I initially used [[https://github.com/namilus/denote-menu][denote-menu]] to navigate my denote notes, but found that if I used folgezettel, I needed a much more specialized package for navigating the index and setting new index numberings. Thus, this project was born.
 
 ** Status of this project, future development, and =org-roam-folgezettel=
+:PROPERTIES:
+:CUSTOM_ID: status-of-this-project-future-development-and-org-roam-folgezettel
+:END:
 
 The author of this project has migrated to org-roam. Consequently, /no new major features are planned for this project/. Consequently, users are encouraged to either:
 1. fork this project and copy its code for their own purposes, or
@@ -36,6 +68,9 @@ I am, however, open to making minor improvements to the existing functionality p
 To those interested, the author has moved to creating a similar package for org-roam that is meant to achieve the same purpose of =denote-zettel-interface= to an even greater degree: [[https://github.com/krisbalintona/org-roam-folgezettel][krisbalintona/org-roam-folgezettel]]. Org-roam offers headline-level nodes/notes which, in my view, offers unique benefits to Zettelkasten navigation over file-level-only notes. Additionally, I may consider in the future the possibility of merging these two projects if I can find a way to incorporate denote notes and org-roam nodes into the same core functions.
 
 * Installation
+:PROPERTIES:
+:CUSTOM_ID: installation
+:END:
 
 Currently, this project is not available in a package repository. As such, users will need to manually download the files (e.g. =git clone https://github.com/krisbalintona/denote-zettel-interface.git=) and ensure its dependencies are installed. Currently, these are the only third-party dependencies:
 1. [[https://github.com/protesilaos/denote][Denote.el]]
@@ -57,8 +92,14 @@ Or, if using Emacs-30 or newer:
 #+end_src
 
 * Usage
+:PROPERTIES:
+:CUSTOM_ID: usage
+:END:
 
 ** Sample configuration
+:PROPERTIES:
+:CUSTOM_ID: sample-configuration
+:END:
 
 Here is a variant of the author's use-package configuration:
 #+begin_src emacs-lisp
@@ -87,6 +128,9 @@ Here is a variant of the author's use-package configuration:
 #+end_src
 
 ** Sample workflow
+:PROPERTIES:
+:CUSTOM_ID: sample-workflow
+:END:
 
 1. Call =M-x denote-zettel-interface-list= to list Denote notes.
 2. Press =/ d= (or ~M-x denote-zettel-interface-edit-filter~) to filter your notes by regexp on denote file names.
@@ -96,6 +140,9 @@ Here is a variant of the author's use-package configuration:
 6. That note is now a child of the chosen parent note, with an index numbering that is automatically set to the next available index numbering for children of the parent note.
 
 ** Commands
+:PROPERTIES:
+:CUSTOM_ID: commands
+:END:
 
 Below are a list of useful commands for those viewing the package for the first time. You can also find these commands and more via ~M-x apropos-command denote-zettel-interface RET~.
 + ~denote-zettel-interface-list~
@@ -130,6 +177,9 @@ Below are a list of useful commands for those viewing the package for the first 
   Call `org-store-link' on the entry at point if an org file.
 
 * Index numbering
+:PROPERTIES:
+:CUSTOM_ID: index-numbering
+:END:
 
 This project assumes the following folgezettel index numbering schema:
 + Denote [[https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][note signatures]] contain just the index numbering for that note.
@@ -140,6 +190,9 @@ This project assumes the following folgezettel index numbering schema:
 + In a ~denote-zettel-interface-mode~ buffer, the "=" in these index numberings are rendered as periods. So: "1=3a12c1" becomes "1.3a12c1".
 
 * Footnotes
+:PROPERTIES:
+:CUSTOM_ID: footnotes
+:END:
 
 [fn:1] In fact, users can treat separate subdirectories as different Zettelkastens, each having their own index numbering.
 
